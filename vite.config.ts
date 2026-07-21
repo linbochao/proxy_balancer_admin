@@ -15,4 +15,15 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
    }),
   ],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
+  server: {
+    host: true,
+    port: 5130,
+    open: true,
+    cors: true,
+  },
 })
