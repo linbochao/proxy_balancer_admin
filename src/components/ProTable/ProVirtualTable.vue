@@ -5,13 +5,8 @@
         <el-button size="small" :icon="Grid" />
         <template #dropdown>
           <el-dropdown-menu class="column-setting-dropdown">
-            <el-checkbox
-              v-for="col in toggleableColumns"
-              :key="col.prop"
-              :model-value="!hiddenColumns.has(col.prop)"
-              @change="toggleColumn(col.prop)"
-              style="padding: 4px 12px; display: block"
-            >
+            <el-checkbox v-for="col in toggleableColumns" :key="col.prop" :model-value="!hiddenColumns.has(col.prop)"
+              @change="toggleColumn(col.prop)" style="padding: 4px 12px; display: block">
               {{ col.label }}
             </el-checkbox>
           </el-dropdown-menu>
@@ -19,24 +14,20 @@
       </el-dropdown>
     </div>
 
-    <el-table-v2
-      ref="tableRef"
-      :columns="virtualColumns"
-      :data="data"
-      :width="tableWidth"
-      :height="maxHeight"
-      :fixed-columns="fixedLeftColumns"
-      :fixed-right-columns="fixedRightColumns"
-      v-loading="loading"
-      :scrollbar-always-on="true"
-      @cell-click="onCellClick"
-      @row-click="onRowClick"
-    />
+    <div class="table-container">
+      <el-auto-resizer>
+        <template #default="{ height, width }">
+          <el-table-v2 ref="tableRef" :columns="getComputedColumns(width)" :data="data"
+            :width="Math.max(width || 0, totalMinWidth)" :height="height || maxHeight" v-loading="loading"
+            :scrollbar-always-on="true" @cell-click="onCellClick" @row-click="onRowClick" />
+        </template>
+      </el-auto-resizer>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, h } from 'vue'
+import { ref, computed, h } from 'vue'
 import { Grid } from '@element-plus/icons-vue'
 import type { Column, TableBtn } from './type'
 
@@ -47,9 +38,11 @@ const props = withDefaults(
     showToolbar?: boolean
     loading?: boolean
     maxHeight?: string | number
+    fit?: boolean
   }>(),
   {
     maxHeight: 400,
+    fit: true,
   }
 )
 
@@ -59,10 +52,10 @@ const emit = defineEmits<{
 }>()
 
 const tableRef = ref()
-const containerRef = ref<HTMLElement | null>(null)
-const tableWidth = ref(800)
-
 const hiddenColumns = ref<Set<string>>(new Set())
+
+const DEFAULT_MIN_WIDTH = 80  // 默认最小宽度
+const DEFAULT_WIDTH = 120  // 默认宽度
 
 const toggleableColumns = computed(() =>
   props.columns.filter(
@@ -84,75 +77,143 @@ const visibleColumns = computed(() =>
   props.columns.filter((c) => !hiddenColumns.value.has(c.prop))
 )
 
-const virtualColumns = computed(() => {
+function getColumnMinWidth(col: Column): number {
+  if (col.minWidth) {
+    return typeof col.minWidth === 'number' ? col.minWidth : parseInt(col.minWidth) || DEFAULT_MIN_WIDTH
+  }
+  if (col.width) {
+    return typeof col.width === 'number' ? col.width : parseInt(col.width) || DEFAULT_WIDTH
+  }
+  return DEFAULT_MIN_WIDTH
+}
+
+function getColumnFixedWidth(col: Column): number | null {
+  if (col.width) {
+    return typeof col.width === 'number' ? col.width : parseInt(col.width) || null
+  }
+  return null
+}
+
+const totalMinWidth = computed(() => {
+  return visibleColumns.value.reduce((sum, col) => {
+    return sum + getColumnMinWidth(col)
+  }, 0)
+})
+
+function getComputedColumns(availableWidth: number) {
+  if (!props.fit || availableWidth <= 0 || totalMinWidth.value >= availableWidth) {
+    return visibleColumns.value.map((col) => {
+      const fixedWidth = getColumnFixedWidth(col)
+      const width = fixedWidth !== null ? fixedWidth : getColumnMinWidth(col)
+      return buildColumnConfig(col, width)
+    })
+  }
+
+  const fixedColumns = visibleColumns.value.filter(col => getColumnFixedWidth(col) !== null)
+  const flexibleColumns = visibleColumns.value.filter(col => getColumnFixedWidth(col) === null)
+  
+  const fixedWidthTotal = fixedColumns.reduce((sum, col) => {
+    return sum + (getColumnFixedWidth(col) || 0)
+  }, 0)
+  
+  const flexibleMinWidthTotal = flexibleColumns.reduce((sum, col) => {
+    return sum + getColumnMinWidth(col)
+  }, 0)
+
+  const remainingWidth = availableWidth - fixedWidthTotal - flexibleMinWidthTotal
+  
+  if (remainingWidth <= 0) {
+    return visibleColumns.value.map((col) => {
+      const fixedWidth = getColumnFixedWidth(col)
+      const width = fixedWidth !== null ? fixedWidth : getColumnMinWidth(col)
+      return buildColumnConfig(col, width)
+    })
+  }
+
+  const flexibleCount = flexibleColumns.length
+  const extraPerColumn = Math.floor(remainingWidth / flexibleCount)
+  const remainder = remainingWidth % flexibleCount
+
+  let remainderIndex = 0
+
   return visibleColumns.value.map((col) => {
-    if (col.type === 'selection' || col.type === 'index') {
-      return {
-        key: col.prop,
-        label: col.label,
-        width: col.width ?? 60,
-        align: col.align ?? 'left',
-        cellRenderer: ({ cellValue }: { cellValue: any }) => {
-          if (col.type === 'selection') {
-            return ''
-          }
-          return cellValue
-        },
-      }
+    const fixedWidth = getColumnFixedWidth(col)
+    if (fixedWidth !== null) {
+      return buildColumnConfig(col, fixedWidth)
     }
 
-    if (col.type === 'operation') {
-      return {
-        key: col.prop,
-        label: col.label,
-        width: col.width ?? 180,
-        align: col.align ?? 'left',
-        cellRenderer: ({ row }: { row: any }) => {
-          return h(
-            'div',
-            { class: 'operation-cell' },
-            col.tableBtns?.length
-              ? col.tableBtns.slice(0, 3).map((btn: TableBtn) =>
-                  h(
-                    'button',
-                    {
-                      type: 'button',
-                      class: ['el-button', `el-button--${btn.type}`, btn.link ? 'el-button--link' : ''],
-                      onClick: () => onOperationClick(btn, row),
-                    },
-                    btn.label
-                  )
-                )
-              : []
-          )
-        },
-      }
-    }
+    const baseWidth = getColumnMinWidth(col)
+    const extra = extraPerColumn + (remainderIndex < remainder ? 1 : 0)
+    remainderIndex++
+    return buildColumnConfig(col, baseWidth + extra)
+  })
+}
 
+function buildColumnConfig(col: Column, width: number) {
+  if (col.type === 'selection' || col.type === 'index') {
     return {
       key: col.prop,
-      label: col.label,
-      width: col.width ?? 120,
+      title: col.label,
+      dataKey: col.prop,
+      width: width,
       align: col.align ?? 'left',
-      sortable: col.sortable,
-      cellRenderer: col.formatter
-        ? ({ row, cellValue, index }: { row: any; cellValue: any; index: number }) => {
-            if (!col.formatter) return cellValue
-            return col.formatter(row, col, cellValue, index)
-          }
-        : undefined,
+      cellRenderer: ({ cellData }: { cellData: any }) => {
+        if (col.type === 'selection') {
+          return ''
+        }
+        return cellData
+      },
     }
-  })
-})
+  }
 
-const fixedLeftColumns = computed(() => {
-  return virtualColumns.value.filter((col) => col.align === 'left').slice(0, 2)
-})
+  if (col.type === 'operation') {
+    return {
+      key: col.prop,
+      title: col.label,
+      dataKey: col.prop,
+      width: width,
+      align: col.align ?? 'center',
+      cellRenderer: ({ rowData }: { rowData: any }) => {
+        return h(
+          'div',
+          { class: 'operation-cell' },
+          col.tableBtns?.length
+            ? col.tableBtns.slice(0, 3).map((btn: TableBtn) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  class: ['el-button', 'el-button--small', `el-button--${btn.type}`, btn.link ? 'el-button--link' : ''],
+                  onClick: () => onOperationClick(btn, rowData),
+                },
+                btn.label
+              )
+            )
+            : []
+        )
+      },
+    }
+  }
 
-const fixedRightColumns = computed(() => {
-  const opsCol = virtualColumns.value.find((col) => col.key === 'operation')
-  return opsCol ? [opsCol] : []
-})
+  return {
+    key: col.prop,
+    title: col.label,
+    dataKey: col.prop,
+    width: width,
+    align: col.align ?? 'left',
+    sortable: col.sortable,
+    cellRenderer: col.formatter
+      ? ({ cellData, rowData, rowIndex }: { cellData: any; rowData: any; rowIndex: number }) => {
+        if (!col.formatter) return cellData
+        const result = col.formatter(rowData, col, cellData, rowIndex)
+        if (typeof result === 'string') {
+          return h('span', { innerHTML: result })
+        }
+        return result
+      }
+      : undefined,
+  }
+}
 
 function onOperationClick(btn: TableBtn, row: any) {
   emit('tableRowClick', btn, row)
@@ -166,21 +227,6 @@ function onRowClick({ row }: { row: any }) {
   emit('rowClick', row)
 }
 
-function handleResize() {
-  if (containerRef.value) {
-    tableWidth.value = containerRef.value.offsetWidth
-  }
-}
-
-onMounted(() => {
-  handleResize()
-  window.addEventListener('resize', handleResize)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-})
-
 defineExpose({
   tableRef,
 })
@@ -189,11 +235,58 @@ defineExpose({
 <style scoped>
 .pro-virtual-table {
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-container {
+  flex: 1;
+  min-height: 400px;
+  overflow-x: auto;
+}
+
+:deep(.el-table-v2) {
+  min-width: 100%;
+}
+
+:deep(.el-table-v2__header-wrapper) {
+  width: 100%;
+}
+
+:deep(.el-table-v2__header-wrapper th) {
+  background-color: #fafafa;
+  color: #606266;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table-v2__body-wrapper) {
+  width: 100%;
+}
+
+:deep(.el-table-v2__row) {
+  width: 100%;
+}
+
+:deep(.el-table-v2__row-cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .operation-cell {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+:deep(.el-table-v2 .el-button) {
+  padding: 4px 10px;
+  font-size: 12px;
 }
 </style>

@@ -1,8 +1,5 @@
 import axios, {
   type AxiosInstance,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
-  type AxiosError,
 } from "axios";
 
 export interface ApiResponse<T = unknown> {
