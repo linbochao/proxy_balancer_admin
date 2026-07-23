@@ -41,9 +41,9 @@ export const routes = [
         meta: { title: 'Connector', icon: 'BarChart3' },
         children: [
           {
-            path: 'overview',
-            name: 'MetricsOverview',
-            component: () => import('../views/metrics/overview.vue'),
+            path: 'serviceType',
+            name: 'ServiceType',
+            component: () => import('../views/metrics/serviceType/index.vue'),
             meta: { title: '服务类型', icon: 'BarChart3' }
           },
           {

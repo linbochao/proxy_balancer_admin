@@ -17,6 +17,7 @@ export const http: AxiosInstance = axios.create({
 export async function request<T>(
   config: Parameters<typeof http.request>[0],
 ): Promise<ApiResponse<T>> {
+  console.log("request", import.meta) // 打印请求信息
   const res = await http.request<ApiResponse<T>>(config)
   return res.data
 }

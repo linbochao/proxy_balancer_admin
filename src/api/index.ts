@@ -1,16 +1,16 @@
 import {  request } from '@/services/axios'
 const API = {
-    getProxyList: '/proxy/list',
+    regDevicesList: '/oneths/center/api/connectors/instances/registered-devices',
     getProxyDetail: '/proxy/detail',
     createProxy: '/proxy/create',
     updateProxy: '/proxy/update',
     deleteProxy: '/proxy/delete',
 }
 
-export const getProxyList = (data: any) => {
+export const regDevicesList = (params: any) => {
     return request({
-        url: API.getProxyList,
-        method: 'post',
-        data,
+        url: API.regDevicesList,
+        method: 'get',
+        params,
     })
 }

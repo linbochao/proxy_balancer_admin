@@ -165,7 +165,7 @@ const pageTitle = computed(() => {
     '/cluster/list': 'Broker列表',
     '/cluster/nodes': '节点状态',
     '/cluster/topology': '拓扑视图',
-    '/metrics/overview': '指标总览',
+    '/metrics/serviceType': '服务类型',
     '/metrics/performance': '性能分析',
     '/metrics/alerts': '告警配置',
     '/security/users': '用户管理',
