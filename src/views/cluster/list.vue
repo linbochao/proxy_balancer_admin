@@ -71,7 +71,7 @@ const operationBtns: TableBtn[] = [
 ]
 
 const columns = computed<Column[]>(() => [
-  { prop: 'id', label: 'ID' , minWidth: 100 },
+  { prop: 'id', label: 'ID' , width: 50 },
   { prop: 'name', label: '节点名称',  sortable: true, minWidth: 100 },
   { prop: 'host', label: '主机地址', minWidth: 100 },
   { prop: 'port', label: '端口', minWidth: 100 },

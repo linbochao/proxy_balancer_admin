@@ -20,7 +20,11 @@
       class="sidebar-menu"
     >
       <template v-for="item in menuItems" :key="item.path">
-        <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path">
+        <el-sub-menu 
+          v-if="item.children && item.children.length > 0" 
+          :index="item.path"
+          class="sub-menu-item"
+        >
           <template #title>
             <el-icon><component :is="item.icon" /></el-icon>
             <span>{{ item.label }}</span>
@@ -71,6 +75,7 @@ import {
   Monitor
 } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
+import { routes } from '@/router/routes'
 
 interface MenuItem {
   path: string
@@ -91,84 +96,52 @@ const activeMenu = computed(() => {
   return route.path
 })
 
-const menuItems: MenuItem[] = [
-  {
-    path: '/home',
-    label: '首页概览',
-    icon: HomeFilled
-  },
-  {
-    path: '/cluster',
-    label: '集群管理',
-    icon: DataBoard,
-    children: [
-      {
-        path: '/cluster/list',
-        label: 'Broker列表',
-        icon: DataAnalysis
-      },
-      {
-        path: '/cluster/nodes',
-        label: '节点状态',
-        icon: Monitor
-      },
-      {
-        path: '/cluster/topology',
-        label: '拓扑视图',
-        icon: PieChart
+// 图标映射：将路由 meta.icon 的字符串转换为组件
+const iconMap: Record<string, any> = {
+  Home: HomeFilled,
+  Cluster: DataAnalysis,      // 根据实际图标调整
+  Monitor: Monitor,       // 若没有 BarChart3，可用 BarChart
+  Bell: Bell,
+  Shield: Lock,               // 或用 Shield
+  User: User,
+  FileText: Files,
+  Setting: Setting,
+  // 补充其他你用到的图标
+}
+
+// 使用 computed 生成菜单（也可用普通变量，但 computed 更规范）
+const menuItems = computed<MenuItem[]>(() => {
+  const root = routes[0]
+  if (!root || !root.children) return []
+
+  // 递归构建菜单树
+  function buildMenu(routeList: any[], parentFullPath: string = ''): MenuItem[] {
+    return routeList.map(route => {
+      // 1. 组装完整路径（绝对路径，供 router 使用）
+      let fullPath = route.path.startsWith('/') ? route.path : `/${route.path}`
+      if (parentFullPath && parentFullPath !== '/') {
+        fullPath = parentFullPath + fullPath
       }
-    ]
-  },
-  {
-    path: '/metrics',
-    label: '监控指标',
-    icon: PieChart,
-    children: [
-      {
-        path: '/metrics/overview',
-        label: '指标总览',
-        icon: PieChart
-      },
-      {
-        path: '/metrics/performance',
-        label: '性能分析',
-        icon: DataAnalysis
-      },
-      {
-        path: '/metrics/alerts',
-        label: '告警配置',
-        icon: Bell
+
+      // 2. 提取标题和图标
+      const meta = route.meta || {}
+      const item: MenuItem = {
+        path: fullPath,
+        label: meta.title || route.name || '',
+        icon: iconMap[meta.icon] || Setting,  // 未匹配到则用 Setting
       }
-    ]
-  },
-  {
-    path: '/security',
-    label: '安全管理',
-    icon: Lock,
-    children: [
-      {
-        path: '/security/users',
-        label: '用户管理',
-        icon: User
-      },
-      {
-        path: '/security/roles',
-        label: '角色权限',
-        icon: Lock
+
+      // 3. 递归处理子路由
+      if (route.children && route.children.length > 0) {
+        item.children = buildMenu(route.children, fullPath)
       }
-    ]
-  },
-  {
-    path: '/logs',
-    label: '日志管理',
-    icon: Files
-  },
-  {
-    path: '/settings',
-    label: '系统设置',
-    icon: Setting
+      return item
+    })
   }
-]
+
+  return buildMenu(root.children, '')
+})
+
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
@@ -183,8 +156,8 @@ const handleLogoClick = () => {
 <style scoped>
 .sidebar-container {
   height: 100%;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  color: #fff;
+  background-color: #fff;
+  color: #000;
   position: relative;
   transition: width 0.3s ease;
   overflow: hidden;
@@ -200,7 +173,7 @@ const handleLogoClick = () => {
 }
 
 .sidebar-logo:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  /* background-color: rgba(255, 255, 255, 0.05); */
 }
 
 .logo-icon {
@@ -233,36 +206,31 @@ const handleLogoClick = () => {
 }
 
 .sidebar-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  /* background: rgba(255, 255, 255, 0.2); */
   border-radius: 2px;
 }
 
 .el-menu-item,
 .el-sub-menu__title {
-  color: rgba(255, 255, 255, 0.85) !important;
   height: 48px !important;
   line-height: 48px !important;
-  margin: 0 8px !important;
   border-radius: 8px !important;
   margin-bottom: 4px !important;
 }
 
 .el-menu-item:hover,
 .el-sub-menu__title:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  /* background-color: rgba(255, 255, 255, 0.1) !important; */
 }
 
 .el-menu-item.is-active,
 .el-sub-menu__title.is-active {
-  background-color: rgba(64, 158, 255, 0.3) !important;
-  color: #fff !important;
 }
 
 .el-sub-menu .el-menu-item {
   height: 40px !important;
   line-height: 40px !important;
-  padding-left: 56px !important;
-  margin-left: 16px !important;
+  padding-left: 40px !important;
 }
 
 .el-sub-menu__icon-arrow {
@@ -277,7 +245,7 @@ const handleLogoClick = () => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.1);
+  /* background-color: rgba(255, 255, 255, 0.1); */
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,0 +1,96 @@
+import Layout from '../layout/index.vue'
+export const routes = [
+  {
+    path: '',
+    component: Layout,
+    children: [
+      {
+        path: 'home',
+        name: 'Home',
+        component: () => import('../views/home/index.vue'),
+        meta: { title: '首页概览', icon: 'Home' }
+      },
+      {
+        path: 'cluster',
+        name: 'Cluster',
+        meta: { title: '集群管理', icon: 'Cluster' },
+        children: [
+          {
+            path: 'list',
+            name: 'ClusterList',
+            component: () => import('../views/cluster/list.vue'),
+            meta: { title: 'Broker列表', icon: 'Database' }
+          },
+          {
+            path: 'nodes',
+            name: 'ClusterNodes',
+            component: () => import('../views/cluster/nodes.vue'),
+            meta: { title: '节点状态', icon: 'Monitor' }
+          },
+          {
+            path: 'topology',
+            name: 'ClusterTopology',
+            component: () => import('../views/cluster/topology.vue'),
+            meta: { title: '拓扑视图', icon: 'BarChart3' }
+          }
+        ]
+      },
+      {
+        path: 'metrics',
+        name: 'Metrics',
+        meta: { title: 'Connector', icon: 'BarChart3' },
+        children: [
+          {
+            path: 'overview',
+            name: 'MetricsOverview',
+            component: () => import('../views/metrics/overview.vue'),
+            meta: { title: '服务类型', icon: 'BarChart3' }
+          },
+          {
+            path: 'performance',
+            name: 'MetricsPerformance',
+            component: () => import('../views/metrics/performance.vue'),
+            meta: { title: '直连设备类型', icon: 'Database' }
+          },
+          {
+            path: 'alerts',
+            name: 'MetricsAlerts',
+            component: () => import('../views/metrics/alerts.vue'),
+            meta: { title: '第三方平台类型', icon: 'Bell' }
+          }
+        ]
+      },
+      {
+        path: 'security',
+        name: 'Security',
+        meta: { title: '安全管理', icon: 'Shield' },
+        children: [
+          {
+            path: 'users',
+            name: 'SecurityUsers',
+            component: () => import('../views/security/users.vue'),
+            meta: { title: '用户管理', icon: 'User' }
+          },
+          {
+            path: 'roles',
+            name: 'SecurityRoles',
+            component: () => import('../views/security/roles.vue'),
+            meta: { title: '角色权限', icon: 'Shield' }
+          }
+        ]
+      },
+      {
+        path: 'logs',
+        name: 'Logs',
+        component: () => import('../views/logs/index.vue'),
+        meta: { title: '日志管理', icon: 'FileText' }
+      },
+      {
+        path: 'settings',
+        name: 'Settings',
+        component: () => import('../views/settings/index.vue'),
+        meta: { title: '系统设置', icon: 'Setting' }
+      }
+    ]
+  }
+]
