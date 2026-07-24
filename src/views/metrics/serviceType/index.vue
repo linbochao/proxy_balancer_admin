@@ -40,6 +40,9 @@
 import { ref } from 'vue'
 import { regDevicesList } from '@/api'
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 interface AlertRule {
   name: string
@@ -67,12 +70,14 @@ const alertRules = ref<AlertRule[]>([
 
 const editServiceType = (serviceType: AlertRule) => {
   console.log('编辑服务类型', serviceType)
+  // 跳转到编辑页面
+  router.push({ path: '/metrics/serviceType/detail', query: { connectorId: '1712030923627167745' } })
 }
 
 const getList = () => {
   regDevicesList({
-    connectorId: 1712030923627167745,
-    brokerInstanceId: '192.168.110.25-3000',
+    connectorId: "1712030923627167745",
+    brokerInstanceId: 'broker-192.168.110.25-3000',
     page: 1,
     pageSize: 10,
   }).then(res => {

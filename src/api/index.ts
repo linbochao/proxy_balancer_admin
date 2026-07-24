@@ -1,6 +1,6 @@
 import {  request } from '@/services/axios'
 const API = {
-    regDevicesList: '/oneths/center/api/connectors/instances/registered-devices',
+    regDevicesList: '/oneths/register/api/connectors/instances/registered-devices',
     getProxyDetail: '/proxy/detail',
     createProxy: '/proxy/create',
     updateProxy: '/proxy/update',

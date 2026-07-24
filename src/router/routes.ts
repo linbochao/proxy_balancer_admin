@@ -1,8 +1,15 @@
 import Layout from '../layout/index.vue'
 export const routes = [
   {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/login/index.vue'),
+    meta: { title: '登录', requiresAuth: false },
+  },
+  {
     path: '',
     component: Layout,
+    meta: { requiresAuth: true },
     children: [
       {
         path: 'home',
@@ -45,6 +52,12 @@ export const routes = [
             name: 'ServiceType',
             component: () => import('../views/metrics/serviceType/index.vue'),
             meta: { title: '服务类型', icon: 'BarChart3' }
+          },
+           {
+            path: 'serviceType/detail',
+            name: 'ServiceTypeDetail',
+            component: () => import('../views/metrics/serviceType/detail.vue'),
+            meta: { title: '服务类型详情', icon: 'Document', hidden: true }
           },
           {
             path: 'performance',

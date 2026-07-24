@@ -118,16 +118,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { 
-  Menu, 
-  Bell, 
-  Search, 
-  Setting, 
-  User, 
-  ArrowDown, 
-  SwitchButton 
+import {
+  Menu,
+  Bell,
+  Search,
+  Setting,
+  User,
+  ArrowDown,
+  SwitchButton
 } from '@element-plus/icons-vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { clearAuth, getUserInfo } from '@/utils/auth'
+import { logout as logoutApi } from '@/api/auth'
 
 interface Notification {
   id: string
@@ -146,6 +148,7 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
+const router = useRouter()
 
 const notificationCount = ref(3)
 const notifications = ref<Notification[]>([
@@ -154,9 +157,10 @@ const notifications = ref<Notification[]>([
   { id: '3', title: '新用户 admin 登录系统', time: '10分钟前' }
 ])
 
+const savedUserInfo = getUserInfo()
 const userInfo = ref<UserInfo>({
-  name: '系统管理员',
-  role: 'Administrator'
+  name: savedUserInfo?.name || savedUserInfo?.username || '系统管理员',
+  role: savedUserInfo?.role || 'Administrator'
 })
 
 const pageTitle = computed(() => {
@@ -188,13 +192,19 @@ const handleCommand = (_command: string) => {
   notificationCount.value = Math.max(0, notificationCount.value - 1)
 }
 
-const handleSettingCommand = (command: string) => {
+const handleSettingCommand = async (command: string) => {
   if (command === 'logout') {
+    await logoutApi().catch(() => {})
+    clearAuth()
+    router.push('/login')
   }
 }
 
-const handleUserCommand = (command: string) => {
+const handleUserCommand = async (command: string) => {
   if (command === 'logout') {
+    await logoutApi().catch(() => {})
+    clearAuth()
+    router.push('/login')
   }
 }
 

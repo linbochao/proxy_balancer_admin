@@ -1,56 +1,45 @@
 <template>
-  <el-aside 
-    :width="isCollapsed ? '64px' : '220px'" 
-    class="sidebar-container"
-    :class="{ 'sidebar-collapsed': isCollapsed }"
-  >
+  <el-aside :width="isCollapsed ? '64px' : '220px'" class="sidebar-container"
+    :class="{ 'sidebar-collapsed': isCollapsed }">
     <div class="sidebar-logo" @click="handleLogoClick">
       <el-icon :size="24" class="logo-icon">
         <Setting />
       </el-icon>
       <span v-show="!isCollapsed" class="logo-text">Broker管理平台</span>
     </div>
-    
-    <el-menu
-      :default-active="activeMenu"
-      :collapse="isCollapsed"
-      :collapse-transition="false"
-      :router="true"
-      mode="vertical"
-      class="sidebar-menu"
-    >
+
+    <el-menu :default-active="activeMenu" :collapse="isCollapsed" :collapse-transition="false" :router="true"
+      mode="vertical" class="sidebar-menu">
       <template v-for="item in menuItems" :key="item.path">
-        <el-sub-menu 
-          v-if="item.children && item.children.length > 0" 
-          :index="item.path"
-          class="sub-menu-item"
-        >
+        <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path" class="sub-menu-item">
           <template #title>
-            <el-icon><component :is="item.icon" /></el-icon>
+            <el-icon>
+              <component :is="item.icon" />
+            </el-icon>
             <span>{{ item.label }}</span>
           </template>
-          <el-menu-item 
-            v-for="child in item.children" 
-            :key="child.path" 
-            :index="child.path"
-          >
-            <template #title>
-              <el-icon v-if="child.icon"><component :is="child.icon" /></el-icon>
-              <span>{{ child.label }}</span>
-            </template>
-          </el-menu-item>
+          <template v-for="child in item.children" :key="child.path">
+            <el-menu-item  :index="child.path" v-if="child.hidden !== true">
+              <template #title>
+                <el-icon v-if="child.icon">
+                  <component :is="child.icon" />
+                </el-icon>
+                <span>{{ child.label }}</span>
+              </template>
+            </el-menu-item>
+          </template>
+
         </el-sub-menu>
-        
-        <el-menu-item 
-          v-else 
-          :index="item.path"
-        >
-          <el-icon><component :is="item.icon" /></el-icon>
+
+        <el-menu-item v-else :index="item.path">
+          <el-icon>
+            <component :is="item.icon" />
+          </el-icon>
           <span>{{ item.label }}</span>
         </el-menu-item>
       </template>
     </el-menu>
-    
+
     <div class="collapse-btn" @click="toggleCollapse">
       <el-icon :size="18" :class="{ 'rotate-icon': isCollapsed }">
         <Fold />
@@ -61,14 +50,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { 
-  Setting, 
-  Fold, 
-  HomeFilled, 
-  DataAnalysis, 
-  DataBoard, 
-  PieChart, 
-  Lock, 
+import {
+  Setting,
+  Fold,
+  HomeFilled,
+  DataAnalysis,
+  DataBoard,
+  PieChart,
+  Lock,
   Bell,
   Files,
   User,
@@ -81,7 +70,9 @@ interface MenuItem {
   path: string
   label: string
   icon: any
-  children?: MenuItem[]
+  meta?: any;  // 是否隐藏该菜单项（用于控制路由是否显示） 
+  children?: MenuItem[],
+  hidden?: boolean;  // 是否隐藏该菜单项（用于控制路由是否显示） 
 }
 
 const emit = defineEmits<{
@@ -99,19 +90,21 @@ const activeMenu = computed(() => {
 // 图标映射：将路由 meta.icon 的字符串转换为组件
 const iconMap: Record<string, any> = {
   Home: HomeFilled,
-  Cluster: DataAnalysis,      // 根据实际图标调整
-  Monitor: Monitor,       // 若没有 BarChart3，可用 BarChart
+  Cluster: DataAnalysis,
+  Monitor: Monitor,
   Bell: Bell,
-  Shield: Lock,               // 或用 Shield
+  Shield: Lock,
   User: User,
   FileText: Files,
   Setting: Setting,
-  // 补充其他你用到的图标
+  Database: DataBoard,
+  BarChart3: PieChart,
 }
 
 // 使用 computed 生成菜单（也可用普通变量，但 computed 更规范）
 const menuItems = computed<MenuItem[]>(() => {
-  const root = routes[0]
+  // 找到包含 children 的布局路由（routes[0] 是登录路由，没有 children）
+  const root = routes.find(r => r.children && r.children.length > 0)
   if (!root || !root.children) return []
 
   // 递归构建菜单树
@@ -129,6 +122,7 @@ const menuItems = computed<MenuItem[]>(() => {
         path: fullPath,
         label: meta.title || route.name || '',
         icon: iconMap[meta.icon] || Setting,  // 未匹配到则用 Setting
+        hidden: meta.hidden || false,  // 从 meta 中获取 hidden 属性，如果不存在则默认为 false
       }
 
       // 3. 递归处理子路由
@@ -138,7 +132,7 @@ const menuItems = computed<MenuItem[]>(() => {
       return item
     })
   }
-
+  console.log('menuItems:',buildMenu(root.children, ''))  // 输出菜单树结构
   return buildMenu(root.children, '')
 })
 
@@ -224,8 +218,7 @@ const handleLogoClick = () => {
 }
 
 .el-menu-item.is-active,
-.el-sub-menu__title.is-active {
-}
+.el-sub-menu__title.is-active {}
 
 .el-sub-menu .el-menu-item {
   height: 40px !important;
