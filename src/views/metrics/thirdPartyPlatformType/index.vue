@@ -158,7 +158,7 @@ const brokerColumns = computed<Column[]>(() => [
 // 获取连接列表（扁平化 connectors）
 const fetchConnectionList = () => {
   state.connectionLoading = true
-  connectorsByAgentType({ agentType: 1 })
+  connectorsByAgentType({ agentType: 3 })
     .then((res) => {
       const raw: any = res.data
       const list: ConnectorItem[] = []

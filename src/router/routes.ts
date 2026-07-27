@@ -53,24 +53,36 @@ export const routes = [
             component: () => import('../views/metrics/serviceType/index.vue'),
             meta: { title: '服务类型', icon: 'BarChart3' }
           },
-           {
+          {
             path: 'serviceType/detail',
             name: 'ServiceTypeDetail',
             component: () => import('../views/metrics/serviceType/detail.vue'),
             meta: { title: '服务类型详情', icon: 'Document', hidden: true }
           },
           {
-            path: 'performance',
-            name: 'MetricsPerformance',
-            component: () => import('../views/metrics/performance.vue'),
+            path: 'connectionDeviceType',
+            name: 'connectionDeviceType',
+            component: () => import('../views/metrics/connectionDeviceType/index.vue'),
             meta: { title: '直连设备类型', icon: 'Database' }
           },
           {
-            path: 'alerts',
-            name: 'MetricsAlerts',
-            component: () => import('../views/metrics/alerts.vue'),
+            path: 'connectionDeviceType/detail',
+            name: 'ConnectionDeviceTypeDetail',
+            component: () => import('../views/metrics/connectionDeviceType/detail.vue'),
+            meta: { title: '直连设备类型详情', icon: 'Document', hidden: true }
+          },
+          {
+            path: 'thirdPartyPlatformType',
+            name: 'thirdPartyPlatformType',
+            component: () => import('../views/metrics/thirdPartyPlatformType/index.vue'),
             meta: { title: '第三方平台类型', icon: 'Bell' }
-          }
+          },
+          {
+            path: 'thirdPartyPlatformType/detail',
+            name: 'thirdPartyPlatformTypeDetail',
+            component: () => import('../views/metrics/thirdPartyPlatformType/detail.vue'),
+            meta: { title: '第三方平台类型详情', icon: 'Document', hidden: true }
+          },
         ]
       },
       {
