@@ -105,10 +105,10 @@ export const routes = [
         ]
       },
       {
-        path: 'logs',
-        name: 'Logs',
-        component: () => import('../views/logs/index.vue'),
-        meta: { title: '日志管理', icon: 'FileText' }
+        path: 'deviceQuery',
+        name: 'deviceQuery',
+        component: () => import('../views/deviceQuery/index.vue'),
+        meta: { title: '设备路由查询', icon: 'Search' }
       },
       {
         path: 'settings',

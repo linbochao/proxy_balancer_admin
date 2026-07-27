@@ -134,7 +134,7 @@ const operationBtns: TableBtn[] = [
 // 状态格式化
 const statusFormatter = (row: Record<string, any>) => {
   const isOnline = row.status === 'RUNNING'
-  return `<span class="routeStatus-tag ${isOnline ? 'RUNNING' : 'offline'}">${isOnline ? '在线' : '离线'}</span>`
+  return `<span class="routeStatus-tag ${isOnline ? 'RUNNING' : 'offline'}">${isOnline ? '运行中' : '离线'}</span>`
 }
 
 // 时间格式化

@@ -174,7 +174,7 @@ const pageTitle = computed(() => {
     '/metrics/alerts': '告警配置',
     '/security/users': '用户管理',
     '/security/roles': '角色权限',
-    '/logs': '日志管理',
+    '/deviceQuery': '设备路由查询',
     '/settings': '系统设置'
   }
   return routeTitleMap[route.path] || 'Broker管理平台'

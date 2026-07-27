@@ -60,7 +60,6 @@ const columns = computed<Column[]>(() => [
 ])
 
 const getList = () => {
-  console.log("获取设备列表", router)   // 添加日志
   regDevicesList({
     connectorId: router.currentRoute.value.query.connectorId,
     brokerInstanceId: router.currentRoute.value.query.brokerInstanceId,
