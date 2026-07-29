@@ -56,7 +56,7 @@ const columns = computed<Column[]>(() => [
   { prop: 'brokerInstanceId', label: 'Broker', minWidth: 100 },
   { prop: 'routeStatus', label: '状态', formatter: statusFormatter, minWidth: 100 },
   { prop: 'latestClient', label: 'LatestClient', minWidth: 100 },
-  { prop: 'lastValidatedAt', label: '最近在线', minWidth: 100, formatter: timeFormatter },
+  { prop: 'lastOnlineAt', label: '最近在线', minWidth: 100, formatter: timeFormatter },
 ])
 
 const getList = () => {

@@ -20,7 +20,7 @@ export const routes = [
       {
         path: 'cluster',
         name: 'Cluster',
-        meta: { title: '集群管理', icon: 'Cluster' },
+        meta: { title: 'Broker管理', icon: 'Cluster' },
         children: [
           {
             path: 'list',
@@ -45,7 +45,7 @@ export const routes = [
       {
         path: 'metrics',
         name: 'Metrics',
-        meta: { title: 'Connector', icon: 'BarChart3' },
+        meta: { title: 'Connector管理', icon: 'BarChart3' },
         children: [
           {
             path: 'serviceType',
