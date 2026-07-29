@@ -151,7 +151,7 @@ const brokerColumns = computed<Column[]>(() => [
   { prop: 'requestQps', label: 'QPS', minWidth: 80 },
   { prop: 'totalRequestCount', label: '总消息数', minWidth: 80 },
   { prop: 'startedAt', label: '启动时间', minWidth: 80, formatter: timeFormatter },
-  { prop: 'lastMessageAt', label: '最近消息', minWidth: 80 },
+  { prop: 'lastMessageAt', label: '最近消息', minWidth: 80, formatter: timeFormatter },
   { prop: 'operation', label: '操作', type: 'operation', tableBtns: operationBtns, minWidth: 100 }
 ])
 

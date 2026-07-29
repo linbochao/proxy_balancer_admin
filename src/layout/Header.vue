@@ -18,7 +18,7 @@
     
     <div class="header-right">
       <div class="header-action">
-        <el-dropdown trigger="click" @command="handleCommand">
+        <!-- <el-dropdown trigger="click" @command="handleCommand">
           <div class="action-item notification-item">
             <el-icon :size="20">
               <Bell />
@@ -46,15 +46,15 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
-        </el-dropdown>
+        </el-dropdown> -->
         
-        <el-dropdown trigger="click">
+        <!-- <el-dropdown trigger="click">
           <div class="action-item">
             <el-icon :size="20">
               <Search />
             </el-icon>
           </div>
-        </el-dropdown>
+        </el-dropdown> -->
         
         <el-dropdown trigger="click" @command="handleSettingCommand">
           <div class="action-item">
@@ -177,7 +177,7 @@ const pageTitle = computed(() => {
     '/deviceQuery': '设备路由查询',
     '/settings': '系统设置'
   }
-  return routeTitleMap[route.path] || 'Broker管理平台'
+  return routeTitleMap[route.path] || '中科元景万象注册中心'
 })
 
 const pageSubtitle = computed(() => {

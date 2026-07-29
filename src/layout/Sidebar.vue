@@ -3,9 +3,9 @@
     :class="{ 'sidebar-collapsed': isCollapsed }">
     <div class="sidebar-logo" @click="handleLogoClick">
       <el-icon :size="24" class="logo-icon">
-        <Setting />
+        <img src="@/assets/images/oneths2.png" alt="">
       </el-icon>
-      <span v-show="!isCollapsed" class="logo-text">Broker管理平台</span>
+      <span v-show="!isCollapsed" class="logo-text">中科元景万象注册中心</span>
     </div>
 
     <el-menu :default-active="activeMenu" :collapse="isCollapsed" :collapse-transition="false" :router="true"
@@ -173,17 +173,21 @@ const handleLogoClick = () => {
 }
 
 .logo-icon {
+
   color: #409eff;
   flex-shrink: 0;
+    img {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .logo-text {
   margin-left: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  white-space: nowrap;
+  font-size: 14px;
+  /* white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: ellipsis; */
 }
 
 .sidebar-menu {

@@ -3,15 +3,45 @@
     <!-- 顶部概览卡片 -->
     <div class="stats-grid">
       <el-card class="stat-card" v-for="card in overviewCards" :key="card.key">
-        <div class="stat-icon" :style="{ backgroundColor: card.bgColor, color: card.color }">
-          <el-icon :size="28"><component :is="card.icon" /></el-icon>
+        <div v-if="card.key === 'refresh'" class="stat-info">
+          <div>
+            <el-tooltip :content="card.tooltip" placement="top" effect="dark">
+              <div class="stat-label">{{ card.label }}</div>
+            </el-tooltip>
+            <div class="refresh-controls">
+              <el-select v-model="state.refreshInterval" placeholder="刷新频率" size="small" style="width: 100px"
+                @change="onRefreshIntervalChange">
+                <el-option label="手动" :value="0" />
+                <el-option label="10s" :value="10" />
+                <el-option label="30s" :value="30" />
+                <el-option label="60s" :value="60" />
+              </el-select>
+              <!-- <el-button size="small" :icon="Refresh" :loading="state.isRefreshing"  /> -->
+            </div>
+          </div>
+          <div class="stat-icon" :style="{ backgroundColor: card.bgColor, color: card.color }" style="cursor: pointer" @click="refreshAll">
+            <el-icon :size="28">
+              <component :is="card.icon" />
+            </el-icon>
+          </div>
         </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ card.value }}</div>
-          <el-tooltip :content="card.tooltip" placement="top" effect="dark">
-            <div class="stat-label">{{ card.label }}</div>
-          </el-tooltip>
-        </div>
+        <template v-else>
+          <div class="stat-info">
+            <template
+              style="display: flex;flex-direction: column;align-items: center;justify-content: center;gap: 10px;">
+              <el-tooltip :content="card.tooltip" placement="top" effect="dark">
+                <div class="stat-label">{{ card.label }}</div>
+              </el-tooltip>
+              <div class="stat-value">{{ card.value }}</div>
+            </template>
+            <div class="stat-icon" :style="{ backgroundColor: card.bgColor, color: card.color }">
+              <el-icon :size="28">
+                <component :is="card.icon" />
+              </el-icon>
+            </div>
+          </div>
+
+        </template>
       </el-card>
     </div>
 
@@ -53,13 +83,10 @@
             <div class="dist-progress-item" v-for="item in state.distributionData" :key="item.agentType">
               <div class="dist-progress-header">
                 <span class="dist-progress-name">{{ item.host }}</span>
-                <span class="dist-progress-pct">{{ item.loadRate ?? 0}}%</span>
+                <span class="dist-progress-pct">{{ item.loadRate ?? 0 }}%</span>
               </div>
               <div class="dist-progress-bar">
-                <div
-                  class="dist-progress-fill"
-                  :style="{ width: (item.loadRate ?? 0) + '%' }"
-                ></div>
+                <div class="dist-progress-fill" :style="{ width: (item.loadRate ?? 0) + '%' }"></div>
               </div>
               <div class="dist-progress-meta">
                 <span>最大承载数: {{ item.maxDeviceCount }}</span>
@@ -98,7 +125,7 @@
 <script setup lang="ts">
 import { reactive, computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import {
-  DataAnalysis, Connection, DataBoard,
+  DataAnalysis, Connection, DataBoard, Refresh,
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import {
@@ -141,7 +168,51 @@ const state = reactive({
   // agent type
   agentTypeData: [] as any[],
   agentTypeLoading: false,
+  // refresh
+  refreshInterval: 0,
+  isRefreshing: false,
+
+  conTypeTotal: 0,        // 新增
 })
+
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+const refreshAll = () => {
+  state.isRefreshing = true
+  Promise.all([
+    fetchOverview(),
+    fetchBrokerList(),
+    fetchDistribution(),
+    fetchRuntimeQuality(),
+    fetchAgentType(),
+  ]).finally(() => {
+    state.isRefreshing = false
+  })
+}
+
+const startRefreshTimer = () => {
+  stopRefreshTimer()
+  if (state.refreshInterval > 0) {
+    refreshTimer = setInterval(() => {
+      fetchOverview()
+      fetchBrokerList()
+      fetchDistribution()
+      fetchRuntimeQuality()
+      fetchAgentType()
+    }, state.refreshInterval * 1000)
+  }
+}
+
+const stopRefreshTimer = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+const onRefreshIntervalChange = () => {
+  startRefreshTimer()
+}
 
 const overviewCards = computed<OverviewCard[]>(() => {
   const d = state.overviewData
@@ -170,8 +241,17 @@ const overviewCards = computed<OverviewCard[]>(() => {
       value: d.registeredDeviceCount ?? '--',
       tooltip: '系统中已注册的设备总数',
       icon: DataBoard,
-      bgColor: 'rgba(144, 147, 153, 0.1)',
-      color: '#909399',
+      bgColor: 'rgba(64, 158, 255, 0.1)',
+      color: '#409eff',
+    },
+    {
+      key: 'refresh',
+      label: '数据刷新',
+      value: '',
+      tooltip: '每隔多少秒刷新一次首页数据',
+      icon: Refresh,
+      bgColor: 'rgba(103, 194, 58, 0.1)',
+      color: '#67c23a',
     },
   ]
 })
@@ -181,14 +261,14 @@ const overviewCards = computed<OverviewCard[]>(() => {
 // ---------------------------------------------------------------------------
 
 const fetchOverview = () => {
-  brokersOverview().then((res: any) => {
+  return brokersOverview().then((res: any) => {
     state.overviewData = res.data ?? {}
   })
 }
 
 const fetchBrokerList = () => {
   state.brokerLoading = true
-  brokersList({ page: 1, pageSize: 999 })
+  return brokersList({ page: 1, pageSize: 999 })
     .then((res: any) => {
       const data = res.data as any
       state.brokerList = data.brokers ?? data.records ?? data ?? []
@@ -201,10 +281,9 @@ const fetchBrokerList = () => {
 
 const fetchDistribution = () => {
   state.distributionLoading = true
-  brokersDistribution()
+  return brokersDistribution()
     .then((res: any) => {
       const data = res.data as any
-      console.log(data,'>>>>>>>>') // debug
       state.distributionData = data.brokers
       state.maxDeviceCount = data.maxDeviceCount ?? 0
       state.minDeviceCount = data.minDeviceCount ?? 0
@@ -215,7 +294,7 @@ const fetchDistribution = () => {
 
 const fetchRuntimeQuality = () => {
   state.qualityLoading = true
-  connectorsRuntimeQuality()
+  return connectorsRuntimeQuality()
     .then((res: any) => {
       state.qualityData = res.data ?? {}
     })
@@ -224,9 +303,10 @@ const fetchRuntimeQuality = () => {
 
 const fetchAgentType = () => {
   state.agentTypeLoading = true
-  connectorsDeviceCountsByAgentType()
+  return connectorsDeviceCountsByAgentType()
     .then((res: any) => {
       state.agentTypeData = res.data?.items ?? res.data ?? []
+      state.conTypeTotal = res.data.totalConnectorCount
     })
     .finally(() => { state.agentTypeLoading = false })
 }
@@ -342,10 +422,10 @@ const renderQualityChart = () => {
     graphic: total > 0 ? [
       {
         type: 'text',
-        left: 'center',
-        top: 'center',
+        left: '55%',
+        top: '50%',
         style: {
-          text: `${total}\nConnector总数`,
+          text: `${total}\n连接实例`,
           textAlign: 'center',
           fill: '#303133',
           fontSize: 18,
@@ -357,7 +437,7 @@ const renderQualityChart = () => {
     series: [{
       type: 'pie',
       radius: ['55%', '78%'],
-      center: ['55%', '50%'],
+      center: ['60%', '60%'],
       avoidLabelOverlap: false,
       itemStyle: {
         borderRadius: 4,
@@ -391,23 +471,47 @@ const renderAgentTypeChart = () => {
   }
   const data = state.agentTypeData.map((d: any) => ({
     name: d.agentTypeName || d.name || '',
-    value: d.deviceCount ?? d.connectorCount ?? 0,
+    value: d.connectorCount ?? 0,
+    deviceCount: d.deviceCount ?? 0,
   }))
+  const total = state.conTypeTotal ?? 0
 
   agentTypeChart.setOption({
     tooltip: {
       trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
+      formatter: (params: any) => {
+        const item = data[params.dataIndex]
+        return `${params.name}<br/>连接实例: ${params.value} (${params.percent}%)<br/>设备数量: ${item.deviceCount}`
+      },
     },
     legend: {
       orient: 'vertical',
       left: 'left',
       top: 'center',
+      formatter: (name: string) => {
+        const item = data.find((d: any) => d.name === name)
+        return item ? `${name}  (设备 ${item.deviceCount})` : name
+      },
     },
+    graphic: total > 0 ? [
+      {
+        type: 'text',
+        left: '55%',
+        top: '50%',
+        style: {
+          text: `${total}\n连接总数`,
+          textAlign: 'center',
+          fill: '#303133',
+          fontSize: 18,
+          fontWeight: 'bold',
+          lineHeight: 24,
+        },
+      },
+    ] : [],
     series: [{
       type: 'pie',
-      radius: ['45%', '75%'],
-      center: ['55%', '50%'],
+      radius: ['55%', '78%'],
+      center: ['60%', '60%'],
       avoidLabelOverlap: false,
       itemStyle: {
         borderRadius: 4,
@@ -416,7 +520,15 @@ const renderAgentTypeChart = () => {
       },
       label: { show: false },
       emphasis: {
-        label: { show: true, fontSize: 14, fontWeight: 'bold' },
+        label: {
+          show: true,
+          fontSize: 13,
+          fontWeight: 'bold',
+          formatter: (params: any) => {
+            const item = data[params.dataIndex]
+            return `${params.name}\n连接: ${params.value}  设备: ${item.deviceCount}`
+          },
+        },
       },
       data,
     }],
@@ -455,6 +567,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  stopRefreshTimer()
   window.removeEventListener('resize', handleResize)
   brokerLoadChart?.dispose()
   qualityChart?.dispose()
@@ -479,6 +592,7 @@ onBeforeUnmount(() => {
 }
 
 .stat-card {
+  width: 100%;
   display: flex;
   align-items: center;
   padding: 20px;
@@ -500,9 +614,15 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
+:deep(.el-card__body) {
+  width: 100%;
+  padding: 0
+}
+
 .stat-info {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
 }
 
 .stat-value {
@@ -517,16 +637,27 @@ onBeforeUnmount(() => {
   margin-top: 4px;
 }
 
+.refresh-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 /* ---------------------------------------------------------------------------
    中间行 & 底部行
    --------------------------------------------------------------------------- */
 
 .middle-row,
 .bottom-row {
+  height: 420px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
+  ::after {
+    margin-bottom: 0px;
+  }
 }
 
 .half-card {
@@ -562,7 +693,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  margin-bottom: 20px;
+  margin: 20px;
 }
 
 .dist-card {
@@ -589,6 +720,10 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.dist-progress-item {
+  padding: 10px;
 }
 
 .dist-progress-header {
@@ -680,12 +815,43 @@ onBeforeUnmount(() => {
   background: #fafafa;
 }
 
-.q-col-host { flex: 1.2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.q-col-port { width: 50px; text-align: center; flex-shrink: 0; }
-.q-col-nacos { width: 55px; text-align: center; flex-shrink: 0; }
-.q-col-load { flex: 1.5; min-width: 100px; flex-shrink: 0; }
-.q-col-online { width: 65px; text-align: center; flex-shrink: 0; }
-.q-col-reg { width: 65px; text-align: center; flex-shrink: 0; }
+.q-col-host {
+  flex: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.q-col-port {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.q-col-nacos {
+  width: 55px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.q-col-load {
+  flex: 1.5;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.q-col-online {
+  width: 65px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.q-col-reg {
+  width: 65px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
 .quality-load-bar {
   display: flex;
@@ -741,6 +907,7 @@ onBeforeUnmount(() => {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .middle-row,
   .bottom-row {
     grid-template-columns: 1fr;

@@ -64,7 +64,7 @@
           </span>
           <span v-else>--</span>
         </el-descriptions-item>
-        <el-descriptions-item label="负载率" :span="2">
+        <!-- <el-descriptions-item label="负载率" :span="2">
           <div class="load-rate-bar">
             <el-progress
               :percentage="state.detail.loadRate ?? 0"
@@ -72,7 +72,7 @@
               :stroke-width="18"
             />
           </div>
-        </el-descriptions-item>
+        </el-descriptions-item> -->
         <el-descriptions-item label="Connector运行数">
           {{ state.detail.runningConnectorCount ?? '--' }}
         </el-descriptions-item>
@@ -82,14 +82,14 @@
         <el-descriptions-item label="在线设备数">
           {{ state.detail.onlineDeviceCount ?? '--' }}
         </el-descriptions-item>
+        <el-descriptions-item label="不可用设备数">
+          {{ state.detail.unavailableDeviceCount ?? '--' }}
+        </el-descriptions-item>
         <el-descriptions-item label="离线设备数">
           {{ state.detail.offlineDeviceCount ?? '--' }}
         </el-descriptions-item>
         <el-descriptions-item label="注册设备数">
           {{ state.detail.registeredDeviceCount ?? '--' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="不可用设备数">
-          {{ state.detail.unavailableDeviceCount ?? '--' }}
         </el-descriptions-item>
         <el-descriptions-item label="最大承载设备数">
           {{ state.detail.maxDeviceCount ?? '--' }}
@@ -110,9 +110,9 @@
         <el-descriptions-item label="最近快照时间">
           {{ state.detail.lastSnapshotAt ? formatTime(state.detail.lastSnapshotAt) : '--' }}
         </el-descriptions-item>
-        <el-descriptions-item label="更新时间">
+        <!-- <el-descriptions-item label="更新时间">
           {{ state.detail.updatedAt ? formatTime(state.detail.updatedAt) : '--' }}
-        </el-descriptions-item>
+        </el-descriptions-item> -->
       </el-descriptions>
     </el-dialog>
   </div>
@@ -191,8 +191,8 @@ const loadRateColor = (rate?: number) => {
 
 // 状态格式化
 const statusFormatter = (row: Record<string, any>) => {
-  const isOnline = row.status === 'STARTED'
-  return `<span class="status-tag ${isOnline ? 'online' : 'offline'}">${isOnline ? '运行中' : '停止'}</span>`
+  const isOnline = row.snapshotReported
+  return `<span class="status-tag ">${isOnline ? '已上报' : '未上报'}</span>`
 }
 
 // Nacos存活格式化
@@ -228,8 +228,8 @@ const columns = computed<Column[]>(() => [
   { prop: 'brokerInstanceId', label: 'Broker实例ID', sortable: true, minWidth: 180 },
   { prop: 'host', label: '主机地址', minWidth: 120 },
   { prop: 'port', label: '端口', minWidth: 80 },
-  { prop: 'status', label: '状态', formatter: statusFormatter, minWidth: 100 },
   { prop: 'nacosAlive', label: 'Nacos存活', formatter: nacosAliveFormatter, minWidth: 100 },
+    { prop: 'snapshotReported', label: '快照', formatter: statusFormatter, minWidth: 100 },
   { prop: 'runningConnectorCount', label: 'Connector在线/总数', formatter: connectorFormatter, minWidth: 130 },
   { prop: 'registeredDeviceCount', label: '注册设备', sortable: true, minWidth: 100 },
   { prop: 'maxDeviceCount', label: '最大承载', sortable: true, minWidth: 100 },

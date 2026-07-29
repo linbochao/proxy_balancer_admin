@@ -4,9 +4,10 @@
       <!-- 左侧品牌区域 -->
       <div class="login-brand">
         <div class="brand-icon">
-          <el-icon :size="48"><Setting /></el-icon>
+          <!-- <el-icon :size="48"><Setting /></el-icon> -->
+          <img src="@/assets/images/oneths2.png" alt="">
         </div>
-        <h1 class="brand-title">Broker管理平台</h1>
+        <h1 class="brand-title">中科元景万象注册中心</h1>
         <p class="brand-subtitle">分布式代理负载均衡管理平台</p>
       </div>
 
@@ -16,73 +17,41 @@
 
         <!-- 登录方式切换 Tab -->
         <div class="login-tabs">
-          <span
-            class="tab-item"
-            :class="{ active: activeTab === 'password' }"
-            @click="switchTab('password')"
-          >密码登录</span>
-          <span
-            class="tab-item"
-            :class="{ active: activeTab === 'email' }"
-            @click="switchTab('email')"
-          >邮箱登录</span>
+          <span class="tab-item" :class="{ active: activeTab === 'password' }"
+            @click="switchTab('password')">密码登录</span>
+          <span class="tab-item" :class="{ active: activeTab === 'email' }" @click="switchTab('email')">邮箱登录</span>
         </div>
 
         <!-- ============================================ -->
         <!-- 密码登录表单                                   -->
         <!-- ============================================ -->
-        <el-form
-          v-show="activeTab === 'password'"
-          ref="pwdFormRef"
-          :model="pwdForm"
-          :rules="pwdRules"
-          class="login-form"
-          @keyup.enter="handlePwdLogin"
-        >
+        <el-form v-show="activeTab === 'password'" ref="pwdFormRef" :model="pwdForm" :rules="pwdRules"
+          class="login-form" @keyup.enter="handlePwdLogin">
           <el-form-item prop="username">
-            <el-input
-              v-model="pwdForm.username"
-              placeholder="请输入用户名"
-              :prefix-icon="User"
-              size="large"
-              tabindex="1"
-            />
+            <el-input v-model="pwdForm.username" placeholder="请输入用户名" :prefix-icon="User" size="large" tabindex="1" />
           </el-form-item>
 
           <el-form-item prop="password">
-            <el-input
-              v-model="pwdForm.password"
-              type="password"
-              placeholder="请输入密码"
-              :prefix-icon="Lock"
-              size="large"
-              show-password
-              tabindex="2"
-            />
+            <el-input v-model="pwdForm.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" size="large"
+              show-password tabindex="2" />
           </el-form-item>
 
           <!-- 验证码 -->
           <el-form-item prop="captchaCode">
             <div class="captcha-row">
-              <el-input
-                v-model="pwdForm.captchaCode"
-                placeholder="请输入验证码"
-                size="large"
-                tabindex="3"
-                class="captcha-input"
-              />
+              <el-input v-model="pwdForm.captchaCode" placeholder="请输入验证码" size="large" tabindex="3"
+                class="captcha-input" />
               <div class="captcha-img-wrapper" @click="refreshCaptcha" title="点击刷新验证码">
-                <img
-                  v-if="captchaImage"
-                  :src="captchaImage"
-                  alt="验证码"
-                  class="captcha-img"
-                />
+                <img v-if="captchaImage" :src="captchaImage" alt="验证码" class="captcha-img" />
                 <div v-else class="captcha-placeholder">
-                  <el-icon :size="20" class="captcha-loading-icon"><Loading /></el-icon>
+                  <el-icon :size="20" class="captcha-loading-icon">
+                    <Loading />
+                  </el-icon>
                 </div>
                 <div class="captcha-mask">
-                  <el-icon :size="16"><Refresh /></el-icon>
+                  <el-icon :size="16">
+                    <Refresh />
+                  </el-icon>
                   <span>点击刷新</span>
                 </div>
               </div>
@@ -94,13 +63,7 @@
           </div>
 
           <el-form-item class="login-btn-wrapper">
-            <el-button
-              type="primary"
-              size="large"
-              :loading="pwdLoading"
-              class="login-btn"
-              @click="handlePwdLogin"
-            >
+            <el-button type="primary" size="large" :loading="pwdLoading" class="login-btn" @click="handlePwdLogin">
               {{ pwdLoading ? '登录中...' : '登 录' }}
             </el-button>
           </el-form-item>
@@ -109,40 +72,19 @@
         <!-- ============================================ -->
         <!-- 邮箱验证码登录表单                             -->
         <!-- ============================================ -->
-        <el-form
-          v-show="activeTab === 'email'"
-          ref="emailFormRef"
-          :model="emailForm"
-          :rules="emailRules"
-          class="login-form"
-          @keyup.enter="handleEmailLogin"
-        >
+        <el-form v-show="activeTab === 'email'" ref="emailFormRef" :model="emailForm" :rules="emailRules"
+          class="login-form" @keyup.enter="handleEmailLogin">
           <el-form-item prop="email">
-            <el-input
-              v-model="emailForm.email"
-              placeholder="请输入邮箱地址"
-              :prefix-icon="Message"
-              size="large"
-              tabindex="1"
-            />
+            <el-input v-model="emailForm.email" placeholder="请输入邮箱地址" :prefix-icon="Message" size="large"
+              tabindex="1" />
           </el-form-item>
 
           <el-form-item prop="mailCode">
             <div class="captcha-row">
-              <el-input
-                v-model="emailForm.mailCode"
-                placeholder="请输入邮箱验证码"
-                size="large"
-                tabindex="2"
-                class="captcha-input"
-              />
-              <el-button
-                type="primary"
-                :disabled="sendCodeCountdown > 0"
-                :loading="sendingCode"
-                class="send-code-btn"
-                @click="handleSendCode"
-              >
+              <el-input v-model="emailForm.mailCode" placeholder="请输入邮箱验证码" size="large" tabindex="2"
+                class="captcha-input" />
+              <el-button type="primary" :disabled="sendCodeCountdown > 0" :loading="sendingCode" class="send-code-btn"
+                @click="handleSendCode">
                 {{ sendCodeCountdown > 0 ? `${sendCodeCountdown}s` : '发送验证码' }}
               </el-button>
             </div>
@@ -153,13 +95,7 @@
           </div>
 
           <el-form-item class="login-btn-wrapper">
-            <el-button
-              type="primary"
-              size="large"
-              :loading="emailLoading"
-              class="login-btn"
-              @click="handleEmailLogin"
-            >
+            <el-button type="primary" size="large" :loading="emailLoading" class="login-btn" @click="handleEmailLogin">
               {{ emailLoading ? '登录中...' : '登 录' }}
             </el-button>
           </el-form-item>
@@ -167,7 +103,7 @@
       </div>
     </div>
 
-    <p class="login-footer">Copyright &copy; {{ currentYear }} Broker管理平台</p>
+    <!-- <p class="login-footer">Copyright &copy; {{ currentYear }} Broker管理平台</p> -->
   </div>
 </template>
 
@@ -512,6 +448,11 @@ onUnmounted(() => {
 .brand-icon {
   margin-bottom: 20px;
   opacity: 0.9;
+
+  img {
+    width: 100px;
+    height: 100px;
+  }
 }
 
 .brand-title {
@@ -658,8 +599,13 @@ onUnmounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ---- 发送验证码按钮 ---- */
