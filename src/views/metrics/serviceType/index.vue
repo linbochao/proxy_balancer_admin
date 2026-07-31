@@ -65,7 +65,7 @@
               </template>
             </span>
             <template v-if="state.selectedConnector">
-              <el-tag size="small">{{ state.selectedConnector.protocol }}</el-tag>
+              <!-- <el-tag size="small">{{ state.selectedConnector.protocol }}</el-tag> -->
               <span class="connector-port">端口: {{ state.selectedConnector.port }}</span>
             </template>
           </div>
@@ -131,10 +131,16 @@ const operationBtns: TableBtn[] = [
   // { label: '删除', type: 'danger' }
 ]
 
+// 状态映射
+const statusMap: Record<string, { text: string; class: string }> = {
+  RUNNING: { text: '运行中', class: 'status-online' },
+  STOPPED: { text: '离线', class: 'status-offline' }
+}
+
 // 状态格式化
 const statusFormatter = (row: Record<string, any>) => {
-  const isOnline = row.status === 'RUNNING'
-  return `<span class="routeStatus-tag ${isOnline ? 'RUNNING' : 'offline'}">${isOnline ? '运行中' : '离线'}</span>`
+  const status = statusMap[row.status] || { text: '未知', class: 'status-unknown' }
+  return `<span class="status-tag ${status.class}"><span class="status-dot"></span>${status.text}</span>`
 }
 
 // 时间格式化

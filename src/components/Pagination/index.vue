@@ -65,7 +65,7 @@ function onSizeChange() {
 
 </script>
 
-<style lang="less" scoped>
+<style scoped>
 .app-pagination {
   display: flex;
   justify-content: flex-end;

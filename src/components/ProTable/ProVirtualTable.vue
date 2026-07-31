@@ -200,14 +200,17 @@ function buildColumnConfig(col: Column, width: number) {
     title: col.label,
     dataKey: col.prop,
     width: width,
-    align: col.align ?? 'left',
+    align: col.align ?? 'center',
     sortable: col.sortable,
     cellRenderer: col.formatter
       ? ({ cellData, rowData, rowIndex }: { cellData: any; rowData: any; rowIndex: number }) => {
         if (!col.formatter) return cellData
         const result = col.formatter(rowData, col, cellData, rowIndex)
+        if (result && typeof result === 'object' && '__v_isVNode' in result) {
+          return result
+        }
         if (typeof result === 'string') {
-          return h('span', { innerHTML: result })
+          return h('div', { innerHTML: result })
         }
         return result
       }
@@ -242,7 +245,7 @@ defineExpose({
 
 .table-container {
   flex: 1;
-  min-height: 400px;
+  min-height: 850px;
   overflow-x: auto;
 }
 

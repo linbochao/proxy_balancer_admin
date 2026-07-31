@@ -14,20 +14,21 @@
         :show-toolbar="true"
       />
       
-      <el-pagination 
-        class="pagination"
-        layout="total, prev, pager, next, jumper"
+      <Pagination
+        v-model:page-number="state.currentPage"
+        v-model:page-size="state.pageSize"
         :total="state.total"
-        :page-size="10"
+        @change="getList"
       />
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, onMounted } from 'vue'   // 确保导入 reactive、onMounted
+import { reactive, computed, onMounted, h } from 'vue'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
-import type { Column, TableBtn } from '@/components/ProTable/type'
+import Pagination from '@/components/Pagination/index.vue'
+import type { Column } from '@/components/ProTable/type'
 import { regDevicesList } from '@/api'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
@@ -36,12 +37,24 @@ const router = useRouter()
 const state = reactive({
   brokerList: [],
   total: 0,
+  currentPage: 1,
+  pageSize: 10,
 })
 
-// 状态格式化
+// 状态映射
+const statusMap: Record<string, { text: string; class: string }> = {
+  ONLINE: { text: '在线', class: 'status-online' },
+  OFFLINE: { text: '离线', class: 'status-offline' },
+  UNAVAILABLE: { text: '不稳定', class: 'status-unavailable' },
+}
+
+// 状态格式化 - 返回 VNode
 const statusFormatter = (row: Record<string, any>) => {
-  const isOnline = row.routeStatus === 'ONLINE'
-  return `<span class="routeStatus-tag ${isOnline ? 'ONLINE' : 'offline'}">${isOnline ? '在线' : '离线'}</span>`
+  const status = statusMap[row.routeStatus] || { text: '未知', class: 'status-unknown' }
+  return h('span', { class: ['status-tag', status.class] }, [
+    h('span', { class: 'status-dot' }),
+    status.text
+  ])
 }
 
 // 时间格式化
@@ -57,16 +70,17 @@ const columns = computed<Column[]>(() => [
   { prop: 'routeStatus', label: '状态', formatter: statusFormatter, minWidth: 100 },
   { prop: 'latestClient', label: 'LatestClient', minWidth: 100 },
   { prop: 'lastOnlineAt', label: '最近在线', minWidth: 100, formatter: timeFormatter },
+  { prop: 'reportedAt', label: '路由上报时间', minWidth: 100, formatter: timeFormatter },
 ])
 
 const getList = () => {
   regDevicesList({
     connectorId: router.currentRoute.value.query.connectorId,
     brokerInstanceId: router.currentRoute.value.query.brokerInstanceId,
-    page: 1,
-    pageSize: 10,
-  }).then(res => {
-    state.brokerList = res.data.records   // 直接赋值
+    page: state.currentPage,
+    pageSize: state.pageSize,
+  }).then((res: any) => {
+    state.brokerList = res.data.records
     state.total = res.data.total
   })
 }
@@ -81,33 +95,13 @@ onMounted(() => {
   padding: 0;
 }
 
+.cluster-list-view :deep(.el-card) {
+  position: relative;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.pagination {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.status-tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-tag.online {
-  background-color: rgba(103, 194, 58, 0.1);
-  color: #67c23a;
-}
-
-.status-tag.offline {
-  background-color: rgba(255, 77, 79, 0.1);
-  color: #f56c6c;
 }
 </style>

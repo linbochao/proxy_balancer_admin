@@ -10,7 +10,7 @@
       <ProVirtualTable
         :columns="columns"
         :data="state.brokerList"
-        :max-height="500"
+        min-height="500"
         :show-toolbar="true"
         :loading="state.loading"
         @table-row-click="onOperationClick"
@@ -82,7 +82,7 @@
         <el-descriptions-item label="在线设备数">
           {{ state.detail.onlineDeviceCount ?? '--' }}
         </el-descriptions-item>
-        <el-descriptions-item label="不可用设备数">
+        <el-descriptions-item label="不稳定设备数">
           {{ state.detail.unavailableDeviceCount ?? '--' }}
         </el-descriptions-item>
         <el-descriptions-item label="离线设备数">
@@ -229,7 +229,7 @@ const columns = computed<Column[]>(() => [
   { prop: 'host', label: '主机地址', minWidth: 120 },
   { prop: 'port', label: '端口', minWidth: 80 },
   { prop: 'nacosAlive', label: 'Nacos存活', formatter: nacosAliveFormatter, minWidth: 100 },
-    { prop: 'snapshotReported', label: '快照', formatter: statusFormatter, minWidth: 100 },
+  { prop: 'snapshotReported', label: '快照', formatter: statusFormatter, minWidth: 100 },
   { prop: 'runningConnectorCount', label: 'Connector在线/总数', formatter: connectorFormatter, minWidth: 130 },
   { prop: 'registeredDeviceCount', label: '注册设备', sortable: true, minWidth: 100 },
   { prop: 'maxDeviceCount', label: '最大承载', sortable: true, minWidth: 100 },
@@ -293,6 +293,10 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+:deep(.table-container) {
+  min-height: 870px;
 }
 
 .pagination {

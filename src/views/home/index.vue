@@ -129,7 +129,7 @@ import {
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import {
-  brokersOverview, brokersList, brokersDistribution,
+  brokersOverview, brokersList, brokersDistribution,loads,
   connectorsRuntimeQuality, connectorsDeviceCountsByAgentType,
 } from '@/api'
 
@@ -268,7 +268,7 @@ const fetchOverview = () => {
 
 const fetchBrokerList = () => {
   state.brokerLoading = true
-  return brokersList({ page: 1, pageSize: 999 })
+  return loads()
     .then((res: any) => {
       const data = res.data as any
       state.brokerList = data.brokers ?? data.records ?? data ?? []
@@ -347,7 +347,7 @@ const renderBrokerLoadChart = () => {
       formatter: (params: any) => {
         const item = params[0]
         const d = list[item.dataIndex]
-        return `${d.host}<br/>负载率: ${d.loadRate}%<br/>在线设备: ${d.onlineDeviceCount}/${d.maxDeviceCount}`
+        return `Broker状态: ${d.nacosAlive ? '存活' : '离线'}<br/>${d.host}<br/>负载率: ${d.loadRate}%<br/>在线设备: ${d.onlineDeviceCount}/${d.maxDeviceCount}`
       },
     },
     grid: { left: '3%', right: '5%', bottom: '3%', top: '8%', containLabel: true },

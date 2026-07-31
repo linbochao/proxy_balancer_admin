@@ -9,6 +9,7 @@ const API = {
     createProxy: '/proxy/create',
     updateProxy: '/proxy/update',
     deleteProxy: '/proxy/delete',
+    loads: '/oneths/register/api/brokers/loads',  // 获取broker负载数据
     brokersList: '/oneths/register/api/brokers',  // 获取broker列表
     brokersDetail: '/oneths/register/api/brokers/detail',  // 获取broker详情
     brokersOverview: '/oneths/register/api/brokers/overview',  // broker概览统计
@@ -54,6 +55,13 @@ export const deviceRoutesAvailability = (params: { uniqueId: string }) => {
         url: API.deviceRoutesAvailability,
         method: 'get',
         params,
+    })
+}
+
+export const loads = () => {
+    return request({
+        url: API.loads,
+        method: 'get',
     })
 }
 

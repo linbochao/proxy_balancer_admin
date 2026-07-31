@@ -1,4 +1,4 @@
-import type { Component } from 'vue'
+import type { Component, VNode } from 'vue'
 
 export interface TableBtn {
   label: string
@@ -22,7 +22,7 @@ export interface Column {
   sortable?: boolean | 'custom'
   showOverflowTooltip?: boolean
   hideable?: boolean
-  formatter?: (row: Record<string, any>, column: Column, cellValue: any, index: number) => string
+  formatter?: (row: Record<string, any>, column: Column, cellValue: any, index: number) => string | VNode
   slot?: string
   tableBtns?: TableBtn[]
 }

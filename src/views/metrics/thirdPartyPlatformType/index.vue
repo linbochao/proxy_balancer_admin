@@ -12,19 +12,12 @@
 
         <div v-loading="state.connectionLoading" class="panel-body">
           <template v-if="state.connectorList.length > 0">
-            <div
-              v-for="connector in state.connectorList"
-              :key="connector.connectorId"
-              class="connector-card"
+            <div v-for="connector in state.connectorList" :key="connector.connectorId" class="connector-card"
               :class="{ 'is-active': state.selectedConnector?.connectorId === connector.connectorId }"
-              @click="onConnectorClick(connector)"
-            >
+              @click="onConnectorClick(connector)">
               <div class="card-top">
                 <span class="card-name">{{ connector.connectorName }}</span>
-                <el-tag
-                  :type="connector.status === 'RUNNING' ? 'success' : 'info'"
-                  size="small"
-                >
+                <el-tag :type="connector.status === 'RUNNING' ? 'success' : 'info'" size="small">
                   {{ connector.status === 'RUNNING' ? '运行中' : '已停止' }}
                 </el-tag>
               </div>
@@ -65,7 +58,7 @@
               </template>
             </span>
             <template v-if="state.selectedConnector">
-              <el-tag size="small">{{ state.selectedConnector.protocol }}</el-tag>
+              <!-- <el-tag size="small">{{ state.selectedConnector.protocol }}</el-tag> -->
               <span class="connector-port">端口: {{ state.selectedConnector.port }}</span>
             </template>
           </div>
@@ -76,13 +69,8 @@
             <el-empty description="请选择左侧连接查看 Broker 分布" />
           </template>
           <template v-else>
-            <ProVirtualTable
-              :columns="brokerColumns"
-              :data="state.brokerList"
-              :max-height="500"
-              :show-toolbar="true"
-              @table-row-click="onOperationClick"
-            />
+            <ProVirtualTable :columns="brokerColumns" :data="state.brokerList" :max-height="500" :show-toolbar="true"
+              @table-row-click="onOperationClick" />
           </template>
         </div>
       </el-card>
@@ -127,14 +115,18 @@ const state = reactive({
 
 const operationBtns: TableBtn[] = [
   { label: '注册设备', type: 'primary', link: true },
-  // { label: '重启', type: 'warning' },
-  // { label: '删除', type: 'danger' }
 ]
+
+// 状态映射
+const statusMap: Record<string, { text: string; class: string }> = {
+  RUNNING: { text: '运行中', class: 'status-online' },
+  STOPPED: { text: '离线', class: 'status-offline' }
+}
 
 // 状态格式化
 const statusFormatter = (row: Record<string, any>) => {
-  const isOnline = row.status === 'RUNNING'
-  return `<span class="routeStatus-tag ${isOnline ? 'RUNNING' : 'offline'}">${isOnline ? '运行中' : '离线'}</span>`
+  const status = statusMap[row.status] || { text: '未知', class: 'status-unknown' }
+  return `<span class="status-tag ${status.class}"><span class="status-dot"></span>${status.text}</span>`
 }
 
 // 时间格式化

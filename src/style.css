@@ -54,6 +54,47 @@ html, body {
   background: #a8a8a8;
 }
 
+/* ===== 状态区分 ===== */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-dot{
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: #67c23a;
+}
+
+.status-online {
+  /* background-color: #f0f9eb; */
+  /* color: #67c23a; */
+}
+
+.status-online .status-dot {
+  background-color: #67c23a;
+}
+
+.status-offline .status-dot {
+  background-color: #f56c6c;
+}
+
+.status-unavailable .status-dot {
+  background-color: #ebc014;
+}
+
+.status-unknown .status-dot {
+  background-color: #909399;
+}
+
 @media screen and (max-width: 768px) {
   .common-layout .sidebar-container {
     position: fixed;
