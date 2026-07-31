@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<{
     pageNumber: 1,
     pageSize: 10,
     total: 0,
-    pageSizes: () => [10, 20, 50, 100],
+    pageSizes: () => [10, 20, 50, 100,],
     layout: 'total, sizes, prev, pager, next, jumper',
     background: true,
     disabled: false,

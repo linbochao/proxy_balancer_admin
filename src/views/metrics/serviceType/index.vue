@@ -6,17 +6,17 @@
         <template #header>
           <div class="card-header">
             <span>连接列表</span>
-            <span class="header-tip">共 {{ state.connectorList.length }} 个连接</span>
+            <span class="header-tip">共 {{ connectorList.length }} 个连接</span>
           </div>
         </template>
 
-        <div v-loading="state.connectionLoading" class="panel-body">
-          <template v-if="state.connectorList.length > 0">
+        <div v-loading="connectionLoading" class="panel-body">
+          <template v-if="connectorList.length > 0">
             <div
-              v-for="connector in state.connectorList"
+              v-for="connector in connectorList"
               :key="connector.connectorId"
               class="connector-card"
-              :class="{ 'is-active': state.selectedConnector?.connectorId === connector.connectorId }"
+              :class="{ 'is-active': selectedConnector?.connectorId === connector.connectorId }"
               @click="onConnectorClick(connector)"
             >
               <div class="card-top">
@@ -60,25 +60,24 @@
           <div class="card-header">
             <span>
               Broker 分布
-              <template v-if="state.selectedConnector">
-                — {{ state.selectedConnector.connectorName }}
+              <template v-if="selectedConnector">
+                — {{ selectedConnector.connectorName }}
               </template>
             </span>
-            <template v-if="state.selectedConnector">
-              <!-- <el-tag size="small">{{ state.selectedConnector.protocol }}</el-tag> -->
-              <span class="connector-port">端口: {{ state.selectedConnector.port }}</span>
+            <template v-if="selectedConnector">
+              <span class="connector-port">端口: {{ selectedConnector.port }}</span>
             </template>
           </div>
         </template>
 
-        <div v-loading="state.brokerLoading" class="panel-body">
-          <template v-if="!state.selectedConnector">
+        <div v-loading="brokerLoading" class="panel-body">
+          <template v-if="!selectedConnector">
             <el-empty description="请选择左侧连接查看 Broker 分布" />
           </template>
           <template v-else>
             <ProVirtualTable
               :columns="brokerColumns"
-              :data="state.brokerList"
+              :data="brokerList"
               :max-height="500"
               :show-toolbar="true"
               @table-row-click="onOperationClick"
@@ -91,65 +90,32 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
 import type { Column, TableBtn } from '@/components/ProTable/type'
 import { useRouter } from 'vue-router'
-import { connectorsByAgentType, connectorsDistribution } from '@/api'
+import { useConnectorList, type ConnectorItem, type Broker } from '../common/useConnectorList'
+import { createStatusFormatter, createTimeFormatter } from '@/utils/formatters'
+
 const router = useRouter()
-import dayjs from 'dayjs'
 
-interface ConnectorItem {
-  connectorId: string
-  connectorName: string
-  protocol: string
-  port: number
-  brokerCount: number
-  status: string
-}
-
-interface Broker {
-  id: string
-  brokerInstanceId: string
-  [key: string]: any
-}
-
-const state = reactive({
-  connectorList: [] as ConnectorItem[],
-  connectionLoading: false,
-  selectedConnector: null as ConnectorItem | null,
-
-  brokerList: [] as Broker[],
-  brokerTotal: 0,
-  brokerPageSize: 10,
-  brokerLoading: false,
-})
+const {
+  connectorList,
+  connectionLoading,
+  selectedConnector,
+  brokerList,
+  brokerLoading,
+  fetchList,
+  selectConnector,
+} = useConnectorList(1) // agentType: 1 = 服务类型
 
 const operationBtns: TableBtn[] = [
   { label: '注册设备', type: 'primary', link: true },
-  // { label: '重启', type: 'warning' },
-  // { label: '删除', type: 'danger' }
 ]
 
-// 状态映射
-const statusMap: Record<string, { text: string; class: string }> = {
-  RUNNING: { text: '运行中', class: 'status-online' },
-  STOPPED: { text: '离线', class: 'status-offline' }
-}
+const statusFormatter = createStatusFormatter('status')
+const timeFormatter = createTimeFormatter()
 
-// 状态格式化
-const statusFormatter = (row: Record<string, any>) => {
-  const status = statusMap[row.status] || { text: '未知', class: 'status-unknown' }
-  return `<span class="status-tag ${status.class}"><span class="status-dot"></span>${status.text}</span>`
-}
-
-// 时间格式化
-const timeFormatter = (_row: Record<string, any>, _column: Column, cellValue: any) => {
-  if (!cellValue) return '--'
-  return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
-}
-
-// Broker 列表列定义
 const brokerColumns = computed<Column[]>(() => [
   { prop: 'brokerInstanceId', label: 'Broker 实例', minWidth: 200 },
   { prop: 'status', label: '状态', minWidth: 100, formatter: statusFormatter },
@@ -161,82 +127,14 @@ const brokerColumns = computed<Column[]>(() => [
   { prop: 'operation', label: '操作', type: 'operation', tableBtns: operationBtns, minWidth: 100 }
 ])
 
-// 获取连接列表（扁平化 connectors）
-const fetchConnectionList = () => {
-  state.connectionLoading = true
-  connectorsByAgentType({ agentType: 1 })
-    .then((res) => {
-      const raw: any = res.data
-      const list: ConnectorItem[] = []
-      if (Array.isArray(raw)) {
-        raw.forEach((group: any) => {
-          if (Array.isArray(group.connectors)) {
-            group.connectors.forEach((c: any) => {
-              list.push({
-                connectorId: c.connectorId,
-                connectorName: c.connectorName,
-                protocol: c.protocol,
-                port: c.port,
-                brokerCount: c.brokerCount,
-                status: c.status,
-              })
-            })
-          }
-        })
-      }
-      state.connectorList = list
-      // 默认选中第一个
-      if (list.length > 0 && !state.selectedConnector) {
-        state.selectedConnector = list[0]
-        fetchBrokerList(list[0].connectorId)
-      }
-    })
-    .catch(() => {
-      state.connectorList = []
-    })
-    .finally(() => {
-      state.connectionLoading = false
-    })
-}
-
-// 获取 Broker 分布数据
-const fetchBrokerList = (connectorId: string) => {
-  state.brokerLoading = true
-  connectorsDistribution(connectorId)
-    .then((res) => {
-      console.log('fetchBrokerList》〉》〉》〉。', res)
-      const data: any = res.data.instances
-      if (Array.isArray(data)) {
-        state.brokerList = data
-        state.brokerTotal = data.length
-      } else if (data?.records) {
-        state.brokerList = data.records
-        state.brokerTotal = data.total || 0
-      } else {
-        state.brokerList = []
-        state.brokerTotal = 0
-      }
-    })
-    .catch(() => {
-      state.brokerList = []
-      state.brokerTotal = 0
-    })
-    .finally(() => {
-      state.brokerLoading = false
-    })
-}
-
-// 点击连接卡片
 const onConnectorClick = (row: ConnectorItem) => {
-  state.selectedConnector = row
-  fetchBrokerList(row.connectorId)
+  selectConnector(row)
 }
 
-// 操作按钮点击
 const onOperationClick = (btn?: TableBtn, row?: Broker) => {
   if (btn && row) {
     if (btn.label === '注册设备') {
-      const connectorId = state.selectedConnector?.connectorId
+      const connectorId = selectedConnector.value?.connectorId
       const brokerInstanceId = row.brokerInstanceId
       router.push({ path: '/metrics/serviceType/detail', query: { connectorId, brokerInstanceId } })
     }
@@ -244,7 +142,7 @@ const onOperationClick = (btn?: TableBtn, row?: Broker) => {
 }
 
 onMounted(() => {
-  fetchConnectionList()
+  fetchList()
 })
 </script>
 

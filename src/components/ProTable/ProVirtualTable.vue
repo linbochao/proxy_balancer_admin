@@ -251,6 +251,7 @@ defineExpose({
 
 :deep(.el-table-v2) {
   min-width: 100%;
+  height: 800px;
 }
 
 :deep(.el-table-v2__header-wrapper) {

@@ -74,20 +74,15 @@ html, body {
   background-color: #67c23a;
 }
 
-.status-online {
-  /* background-color: #f0f9eb; */
-  /* color: #67c23a; */
-}
-
-.status-online .status-dot {
+.status-suc .status-dot {
   background-color: #67c23a;
 }
 
-.status-offline .status-dot {
+.status-unsuc .status-dot {
   background-color: #f56c6c;
 }
 
-.status-unavailable .status-dot {
+.status-warn .status-dot {
   background-color: #ebc014;
 }
 

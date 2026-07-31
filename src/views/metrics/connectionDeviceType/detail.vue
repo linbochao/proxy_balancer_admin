@@ -10,7 +10,7 @@
       <ProVirtualTable
         :columns="columns"
         :data="state.brokerList"
-        :max-height="500"
+        :max-height="700"
         :show-toolbar="true"
       />
       
