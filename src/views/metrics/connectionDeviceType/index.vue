@@ -78,7 +78,6 @@
             <ProVirtualTable
               :columns="brokerColumns"
               :data="brokerList"
-              :max-height="500"
               :show-toolbar="true"
               @table-row-click="onOperationClick"
             />
@@ -148,13 +147,17 @@ onMounted(() => {
 
 <style scoped>
 .service-type-view {
+  height: 100%;
   padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .two-panel-layout {
   display: flex;
   gap: 16px;
-  height: calc(100vh - 120px);
+  flex: 1;
+  min-height: 0;
 }
 
 /* ===== 左侧面板 ===== */
@@ -191,6 +194,7 @@ onMounted(() => {
 
 .panel-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }

@@ -1,18 +1,19 @@
 <template>
   <div class="cluster-list-view">
-    <el-card>
+    <el-card class="detail-card">
       <template #header>
         <div class="card-header">
           <span>注册设备 列表</span>
         </div>
       </template>
       
-      <ProVirtualTable
-        :columns="columns"
-        :data="state.brokerList"
-        :max-height="700"
-        :show-toolbar="true"
-      />
+      <div class="table-section">
+        <ProVirtualTable
+          :columns="columns"
+          :data="state.brokerList"
+          :show-toolbar="true"
+        />
+      </div>
       
       <Pagination
         v-model:page-number="state.currentPage"
@@ -89,11 +90,34 @@ onMounted(() => {
 
 <style scoped>
 .cluster-list-view {
+  height: 100%;
   padding: 0;
 }
 
 .cluster-list-view :deep(.el-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   position: relative;
+}
+
+.cluster-list-view :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  gap: 12px;
+}
+
+.detail-card {
+  height: 100%;
+}
+
+.table-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .card-header {

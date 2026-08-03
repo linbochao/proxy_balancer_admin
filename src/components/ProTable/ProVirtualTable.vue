@@ -18,7 +18,7 @@
       <el-auto-resizer>
         <template #default="{ height, width }">
           <el-table-v2 ref="tableRef" :columns="getComputedColumns(width)" :data="data"
-            :width="Math.max(width || 0, totalMinWidth)" :height="height || maxHeight" v-loading="loading"
+            :width="Math.max(width || 0, totalMinWidth)" :height="tableHeight(height)" v-loading="loading"
             :scrollbar-always-on="true" @cell-click="onCellClick" @row-click="onRowClick" />
         </template>
       </el-auto-resizer>
@@ -41,10 +41,25 @@ const props = withDefaults(
     fit?: boolean
   }>(),
   {
-    maxHeight: 400,
+    maxHeight: 0,
     fit: true,
   }
 )
+
+// 统一处理表格高度：优先使用容器高度，maxHeight 作为上限
+function tableHeight(containerHeight: number) {
+  const maxH = typeof props.maxHeight === 'number' ? props.maxHeight : parseInt(props.maxHeight || '0')
+
+  if (!containerHeight || containerHeight <= 0) {
+    return maxH > 0 ? maxH : 400
+  }
+
+  if (maxH > 0 && containerHeight > maxH) {
+    return maxH
+  }
+
+  return containerHeight
+}
 
 const emit = defineEmits<{
   rowClick: [value: any]
@@ -245,13 +260,16 @@ defineExpose({
 
 .table-container {
   flex: 1;
-  min-height: 850px;
-  overflow-x: auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 :deep(.el-table-v2) {
   min-width: 100%;
-  height: 800px;
+}
+
+:deep(.el-table-v2 .el-table-v2__root) {
+  min-width: 100%;
 }
 
 :deep(.el-table-v2__header-wrapper) {

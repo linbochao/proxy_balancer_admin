@@ -10,6 +10,7 @@
             :is="Component" 
             :key="$route.path"
             v-show="isLoaded"
+            class="route-component"
           />
         </router-view>
       </transition>
@@ -48,7 +49,14 @@ watch(() => route.path, () => {
 
 .content-wrapper {
   height: 100%;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.route-component {
+  flex: 1;
+  min-height: 0;
 }
 
 .content-wrapper::-webkit-scrollbar {

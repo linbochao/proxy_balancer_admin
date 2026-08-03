@@ -1,29 +1,21 @@
 <template>
   <div class="cluster-list-view">
-    <el-card>
+    <el-card class="detail-card">
       <template #header>
         <div class="card-header">
           <span>Broker 列表</span>
         </div>
       </template>
 
-      <ProVirtualTable
-        :columns="columns"
-        :data="state.brokerList"
-        min-height="500"
-        :show-toolbar="true"
-        :loading="state.loading"
-        @table-row-click="onOperationClick"
-      />
-<!-- 
-      <el-pagination
-        class="pagination"
-        layout="total, prev, pager, next, jumper"
-        :total="state.total"
-        v-model:current-page="state.currentPage"
-        :page-size="state.pageSize"
-        @current-change="getList"
-      /> -->
+      <div class="table-section">
+        <ProVirtualTable
+          :columns="columns"
+          :data="state.brokerList"
+          :show-toolbar="true"
+          :loading="state.loading"
+          @table-row-click="onOperationClick"
+        />
+      </div>
     </el-card>
 
     <!-- Broker 详情弹窗 -->
@@ -64,15 +56,6 @@
           </span>
           <span v-else>--</span>
         </el-descriptions-item>
-        <!-- <el-descriptions-item label="负载率" :span="2">
-          <div class="load-rate-bar">
-            <el-progress
-              :percentage="state.detail.loadRate ?? 0"
-              :color="loadRateColor(state.detail.loadRate)"
-              :stroke-width="18"
-            />
-          </div>
-        </el-descriptions-item> -->
         <el-descriptions-item label="Connector运行数">
           {{ state.detail.runningConnectorCount ?? '--' }}
         </el-descriptions-item>
@@ -110,9 +93,6 @@
         <el-descriptions-item label="最近快照时间">
           {{ state.detail.lastSnapshotAt ? formatTime(state.detail.lastSnapshotAt) : '--' }}
         </el-descriptions-item>
-        <!-- <el-descriptions-item label="更新时间">
-          {{ state.detail.updatedAt ? formatTime(state.detail.updatedAt) : '--' }}
-        </el-descriptions-item> -->
       </el-descriptions>
     </el-dialog>
   </div>
@@ -179,14 +159,6 @@ const state = reactive({
 const formatTime = (timestamp: number) => {
   if (!timestamp) return '--'
   return dayjs(timestamp).format('YYYY-MM-DD HH:mm:ss')
-}
-
-// 负载率进度条颜色
-const loadRateColor = (rate?: number) => {
-  if (!rate) return '#67c23a'
-  if (rate >= 80) return '#f56c6c'
-  if (rate >= 60) return '#e6a23c'
-  return '#67c23a'
 }
 
 // 状态格式化
@@ -286,23 +258,38 @@ onMounted(() => {
 
 <style scoped>
 .cluster-list-view {
+  height: 100%;
   padding: 0;
+}
+
+.cluster-list-view :deep(.el-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.cluster-list-view :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.detail-card {
+  height: 100%;
+}
+
+.table-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-:deep(.table-container) {
-  min-height: 870px;
-}
-
-.pagination {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
 }
 
 .status-tag {

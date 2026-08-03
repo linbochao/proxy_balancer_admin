@@ -69,10 +69,7 @@ function onSizeChange() {
 .app-pagination {
   display: flex;
   justify-content: flex-end;
-  position: absolute;
-  bottom: 15px;
-  right: 20px;
-  z-index: 10;
-
+  padding: 16px 0 8px;
+  flex-shrink: 0;
 }
 </style>
