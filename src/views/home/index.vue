@@ -107,7 +107,14 @@
             <span>连接运行质量</span>
           </div>
         </template>
-        <div class="chart-container" ref="qualityChartRef" v-loading="state.qualityLoading"></div>
+        <PieChart
+          :data="qualityChartData"
+          :centerText="qualityCenterText"
+          :showLabel="true"
+          labelFormatter="{b}{d}%"
+          :tooltipFormatter="qualityTooltipFormatter"
+          :loading="state.qualityLoading"
+        />
       </el-card>
 
       <el-card class="half-card">
@@ -116,7 +123,14 @@
             <span>连接分类</span>
           </div>
         </template>
-        <div class="chart-container" ref="agentTypeChartRef" v-loading="state.agentTypeLoading"></div>
+        <PieChart
+          :data="agentTypeChartData"
+          :centerText="agentTypeCenterText"
+          :tooltipFormatter="agentTypeTooltipFormatter"
+          :legendFormatter="agentTypeLegendFormatter"
+          :emphasisLabelFormatter="agentTypeEmphasisFormatter"
+          :loading="state.agentTypeLoading"
+        />
       </el-card>
     </div>
   </div>
@@ -132,6 +146,8 @@ import {
   brokersOverview, brokersList, brokersDistribution,loads,
   connectorsRuntimeQuality, connectorsDeviceCountsByAgentType,
 } from '@/api'
+import PieChart from '@/components/PieChart/index.vue'
+import type { PieDataItem, CenterText } from '@/components/PieChart/index.vue'
 
 // ---------------------------------------------------------------------------
 // 概览卡片
@@ -316,12 +332,75 @@ const fetchAgentType = () => {
 // ---------------------------------------------------------------------------
 
 const brokerLoadChartRef = ref<HTMLDivElement>()
-const agentTypeChartRef = ref<HTMLDivElement>()
-const qualityChartRef = ref<HTMLDivElement>()
 
 let brokerLoadChart: echarts.ECharts | null = null
-let agentTypeChart: echarts.ECharts | null = null
-let qualityChart: echarts.ECharts | null = null
+
+// ---------------------------------------------------------------------------
+// Pie chart data (derived from API responses)
+// ---------------------------------------------------------------------------
+
+const statusColorMap: Record<string, string> = {
+  RUNNING: '#67c23a',
+  STOPPED: '#909399',
+  FAILED: '#f56c6c',
+}
+const statusLabelMap: Record<string, string> = {
+  RUNNING: '运行中',
+  STOPPED: '已停止',
+  FAILED: '失败',
+}
+
+const qualityChartData = computed<PieDataItem[]>(() => {
+  const items: any[] = state.qualityData?.items ?? []
+  return items.map((item: any) => ({
+    name: statusLabelMap[item.status] || item.status,
+    value: item.count,
+    itemStyle: { color: statusColorMap[item.status] || '#409eff' },
+    _raw: item,
+  }))
+})
+
+const qualityCenterText = computed<CenterText | null>(() => {
+  const total = state.qualityData?.totalInstanceCount ?? 0
+  if (total <= 0) return null
+  return { label: String(total), sublabel: '连接实例' }
+})
+
+const qualityTooltipFormatter = (params: any, data: PieDataItem[]) => {
+  const item = (data[params.dataIndex] as any)?._raw
+  return `${statusLabelMap[item?.status] || item?.status}<br/>数量: ${item?.count}<br/>占比: ${item?.ratio}%`
+}
+
+// --- agent type ---
+
+const agentTypeChartData = computed<PieDataItem[]>(() => {
+  return state.agentTypeData.map((d: any) => ({
+    name: d.agentTypeName || d.name || '',
+    value: d.connectorCount ?? 0,
+    deviceCount: d.deviceCount ?? 0,
+  }))
+})
+
+const agentTypeCenterText = computed<CenterText | null>(() => {
+  if (state.conTypeTotal <= 0) return null
+  return { label: String(state.conTypeTotal), sublabel: '连接总数' }
+})
+
+const agentTypeTooltipFormatter = (params: any, data: PieDataItem[]) => {
+  const item = data[params.dataIndex]
+  return `${params.name}<br/>连接实例: ${params.value} (${params.percent}%)<br/>设备数量: ${(item as any).deviceCount}`
+}
+
+const agentTypeLegendFormatter = (name: string, data: PieDataItem[]) => {
+  const item = data.find((d: any) => d.name === name) as any
+  return item ? `${name}  (设备 ${item.deviceCount})` : name
+}
+
+const agentTypeEmphasisFormatter = (params: any) => {
+  const data = agentTypeChartData.value
+  const item = data[params.dataIndex] as any
+  return `${params.name}\n连接: ${params.value}  设备: ${item?.deviceCount}`
+}
 
 // ---------------------------------------------------------------------------
 // 设备分布倾斜率 - 柱状图
@@ -382,158 +461,6 @@ const renderBrokerLoadChart = () => {
   })
 }
 
-// ---------------------------------------------------------------------------
-// 连接运行质量 - 饼图
-// ---------------------------------------------------------------------------
-
-const renderQualityChart = () => {
-  if (!qualityChartRef.value) return
-  if (!qualityChart) {
-    qualityChart = echarts.init(qualityChartRef.value)
-  }
-  const d = state.qualityData
-  const items: any[] = d.items ?? []
-  const total = d.totalInstanceCount ?? 0
-
-  const statusColorMap: Record<string, string> = {
-    RUNNING: '#67c23a',
-    STOPPED: '#909399',
-    FAILED: '#f56c6c',
-  }
-  const statusLabelMap: Record<string, string> = {
-    RUNNING: '运行中',
-    STOPPED: '已停止',
-    FAILED: '失败',
-  }
-
-  qualityChart.setOption({
-    tooltip: {
-      trigger: 'item',
-      formatter: (params: any) => {
-        const item = items[params.dataIndex]
-        return `${statusLabelMap[item.status] || item.status}<br/>数量: ${item.count}<br/>占比: ${item.ratio}%`
-      },
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left',
-      top: 'center',
-    },
-    graphic: total > 0 ? [
-      {
-        type: 'text',
-        left: '55%',
-        top: '50%',
-        style: {
-          text: `${total}\n连接实例`,
-          textAlign: 'center',
-          fill: '#303133',
-          fontSize: 18,
-          fontWeight: 'bold',
-          lineHeight: 24,
-        },
-      },
-    ] : [],
-    series: [{
-      type: 'pie',
-      radius: ['55%', '78%'],
-      center: ['60%', '60%'],
-      avoidLabelOverlap: false,
-      itemStyle: {
-        borderRadius: 4,
-        borderColor: '#fff',
-        borderWidth: 2,
-      },
-      label: {
-        show: true,
-        formatter: '{b}\n{d}%',
-      },
-      emphasis: {
-        label: { show: true, fontSize: 14, fontWeight: 'bold' },
-      },
-      data: items.map((item: any) => ({
-        name: statusLabelMap[item.status] || item.status,
-        value: item.count,
-        itemStyle: { color: statusColorMap[item.status] || '#409eff' },
-      })),
-    }],
-  })
-}
-
-// ---------------------------------------------------------------------------
-// 连接分类 - 饼图
-// ---------------------------------------------------------------------------
-
-const renderAgentTypeChart = () => {
-  if (!agentTypeChartRef.value) return
-  if (!agentTypeChart) {
-    agentTypeChart = echarts.init(agentTypeChartRef.value)
-  }
-  const data = state.agentTypeData.map((d: any) => ({
-    name: d.agentTypeName || d.name || '',
-    value: d.connectorCount ?? 0,
-    deviceCount: d.deviceCount ?? 0,
-  }))
-  const total = state.conTypeTotal ?? 0
-
-  agentTypeChart.setOption({
-    tooltip: {
-      trigger: 'item',
-      formatter: (params: any) => {
-        const item = data[params.dataIndex]
-        return `${params.name}<br/>连接实例: ${params.value} (${params.percent}%)<br/>设备数量: ${item.deviceCount}`
-      },
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left',
-      top: 'center',
-      formatter: (name: string) => {
-        const item = data.find((d: any) => d.name === name)
-        return item ? `${name}  (设备 ${item.deviceCount})` : name
-      },
-    },
-    graphic: total > 0 ? [
-      {
-        type: 'text',
-        left: '55%',
-        top: '50%',
-        style: {
-          text: `${total}\n连接总数`,
-          textAlign: 'center',
-          fill: '#303133',
-          fontSize: 18,
-          fontWeight: 'bold',
-          lineHeight: 24,
-        },
-      },
-    ] : [],
-    series: [{
-      type: 'pie',
-      radius: ['55%', '78%'],
-      center: ['60%', '60%'],
-      avoidLabelOverlap: false,
-      itemStyle: {
-        borderRadius: 4,
-        borderColor: '#fff',
-        borderWidth: 2,
-      },
-      label: { show: false },
-      emphasis: {
-        label: {
-          show: true,
-          fontSize: 13,
-          fontWeight: 'bold',
-          formatter: (params: any) => {
-            const item = data[params.dataIndex]
-            return `${params.name}\n连接: ${params.value}  设备: ${item.deviceCount}`
-          },
-        },
-      },
-      data,
-    }],
-  })
-}
 
 // ---------------------------------------------------------------------------
 // 响应式 resize
@@ -541,8 +468,6 @@ const renderAgentTypeChart = () => {
 
 const handleResize = () => {
   brokerLoadChart?.resize()
-  qualityChart?.resize()
-  agentTypeChart?.resize()
 }
 
 // ---------------------------------------------------------------------------
@@ -550,8 +475,6 @@ const handleResize = () => {
 // ---------------------------------------------------------------------------
 
 watch(() => state.brokerList, () => nextTick(renderBrokerLoadChart), { deep: true })
-watch(() => state.qualityData, () => nextTick(renderQualityChart), { deep: true })
-watch(() => state.agentTypeData, () => nextTick(renderAgentTypeChart), { deep: true })
 
 // ---------------------------------------------------------------------------
 // 生命周期
@@ -570,8 +493,6 @@ onBeforeUnmount(() => {
   stopRefreshTimer()
   window.removeEventListener('resize', handleResize)
   brokerLoadChart?.dispose()
-  qualityChart?.dispose()
-  agentTypeChart?.dispose()
 })
 </script>
 
