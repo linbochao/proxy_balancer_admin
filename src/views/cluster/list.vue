@@ -99,7 +99,6 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
 import type { Column, TableBtn } from '@/components/ProTable/type'

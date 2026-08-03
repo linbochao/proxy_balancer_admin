@@ -128,7 +128,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { Grid } from '@element-plus/icons-vue'
 import type { Column, TableBtn } from './type'
 

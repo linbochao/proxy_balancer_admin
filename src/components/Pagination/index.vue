@@ -9,7 +9,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
 const props = withDefaults(defineProps<{
     /* 当前页 */
     pageNumber?: number

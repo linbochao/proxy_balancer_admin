@@ -89,7 +89,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
 import type { Column, TableBtn } from '@/components/ProTable/type'
 import { useRouter } from 'vue-router'

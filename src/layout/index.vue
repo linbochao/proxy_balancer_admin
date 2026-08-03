@@ -13,10 +13,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import Sidebar from './Sidebar.vue'
-import Header from './Header.vue'
-import MainContent from './MainContent.vue'
+import Sidebar from './components/Sidebar.vue'
+import Header from './components/Header.vue'
+import MainContent from './components/MainContent.vue'
 
 const isSidebarCollapsed = ref(false)
 

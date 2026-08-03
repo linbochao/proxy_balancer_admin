@@ -1,4 +1,3 @@
-import { ref, readonly } from 'vue'
 import { connectorsByAgentType, connectorsDistribution } from '@/api'
 
 export interface ConnectorItem {

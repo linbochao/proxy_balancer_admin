@@ -137,7 +137,6 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import {
   DataAnalysis, Connection, DataBoard, Refresh,
 } from '@element-plus/icons-vue'

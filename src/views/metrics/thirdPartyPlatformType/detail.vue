@@ -3,7 +3,12 @@
     <el-card class="detail-card">
       <template #header>
         <div class="card-header">
-          <span>注册设备 列表</span>
+          <div class="header-left" @click="goBack">
+            <el-icon class="back-btn" :size="26">
+              <DArrowLeft />
+            </el-icon>
+            <span class="header-title">返回</span>
+          </div>
         </div>
       </template>
       
@@ -26,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, onMounted } from 'vue'
+import { DArrowLeft } from '@element-plus/icons-vue'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
 import Pagination from '@/components/Pagination/index.vue'
 import type { Column } from '@/components/ProTable/type'
@@ -34,6 +39,10 @@ import { regDevicesList } from '@/api'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 const router = useRouter()
+
+const goBack = () => {
+  router.go(-1)
+}
 
 const state = reactive({
   brokerList: [],
@@ -49,10 +58,13 @@ const statusMap: Record<string, { text: string; class: string }> = {
   UNAVAILABLE: { text: '不稳定', class: 'status-unavailable' },
 }
 
-// 状态格式化
+// 状态格式化 - 返回 VNode
 const statusFormatter = (row: Record<string, any>) => {
   const status = statusMap[row.routeStatus] || { text: '未知', class: 'status-unknown' }
-  return `<span class="status-tag ${status.class}"><span class="status-dot"></span>${status.text}</span>`
+  return h('span', { class: ['status-tag', status.class] }, [
+    h('span', { class: 'status-dot' }),
+    status.text
+  ])
 }
 
 // 时间格式化
@@ -124,5 +136,37 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+    cursor: pointer;
+}
+
+.back-btn {
+  color: #606266;
+  transition: all 0.25s ease;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.header-left:hover {
+  color: #409eff;
+}
+
+.header-title {
+  font-size: 16px;
+  color: #303133;
+}
+
+@media screen and (max-width: 768px) {
+  .back-btn {
+    padding: 3px;
+  }
+  
+  .header-title {
+    font-size: 14px;
+  }
 }
 </style>

@@ -1,5 +1,3 @@
-import type { Component, VNode } from 'vue'
-
 export interface TableBtn {
   label: string
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info'

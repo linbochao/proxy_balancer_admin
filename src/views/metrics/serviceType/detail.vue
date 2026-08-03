@@ -3,7 +3,12 @@
     <el-card class="detail-card">
       <template #header>
         <div class="card-header">
-          <span>注册设备 列表</span>
+          <div class="header-left" @click="goBack">
+            <el-icon class="back-btn" :size="26">
+              <DArrowLeft />
+            </el-icon>
+            <span class="header-title">返回</span>
+          </div>
         </div>
       </template>
       
@@ -26,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, onMounted, h } from 'vue'
+import { DArrowLeft } from '@element-plus/icons-vue'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
 import Pagination from '@/components/Pagination/index.vue'
 import type { Column } from '@/components/ProTable/type'
@@ -34,6 +39,10 @@ import { regDevicesList } from '@/api'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 const router = useRouter()
+
+const goBack = () => {
+  router.go(-1)
+}
 
 const state = reactive({
   brokerList: [],
@@ -127,5 +136,37 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+    cursor: pointer;
+}
+
+.back-btn {
+  color: #606266;
+  transition: all 0.25s ease;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.header-left:hover {
+  color: #409eff;
+}
+
+.header-title {
+  font-size: 16px;
+  color: #303133;
+}
+
+@media screen and (max-width: 768px) {
+  .back-btn {
+    padding: 3px;
+  }
+  
+  .header-title {
+    font-size: 14px;
+  }
 }
 </style>

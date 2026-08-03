@@ -27,7 +27,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h } from 'vue'
 import { Grid } from '@element-plus/icons-vue'
 import type { Column, TableBtn } from './type'
 

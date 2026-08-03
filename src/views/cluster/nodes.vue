@@ -48,7 +48,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { Monitor } from '@element-plus/icons-vue'
 
 interface Node {

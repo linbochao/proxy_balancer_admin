@@ -196,7 +196,6 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { deviceRoutes, deviceRoutesAvailability } from '@/api'
 import dayjs from 'dayjs'

@@ -1,35 +1,26 @@
 <template>
   <el-main class="main-content">
     <div class="content-wrapper">
-      <transition name="fade" mode="out-in">
-        <router-view 
-          v-slot="{ Component }" 
-          :key="$route.path"
-        >
-          <component 
-            :is="Component" 
+      <router-view v-slot="{ Component }">
+        <transition name="el-zoom-in-left" mode="out-in">
+          <component
+            :is="Component"
             :key="$route.path"
-            v-show="isLoaded"
             class="route-component"
           />
-        </router-view>
-      </transition>
-      
-      <div v-if="!isLoaded" class="loading-container">
-        <div class="loading-ring"></div>
-        <span class="loading-text">加载中...</span>
-      </div>
+        </transition>
+      </router-view>
     </div>
   </el-main>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const isLoaded = ref(true)
 
+// 路由切换时展示加载状态（与 transition 配合）
 watch(() => route.path, () => {
   isLoaded.value = false
   setTimeout(() => {
@@ -118,8 +109,13 @@ watch(() => route.path, () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media screen and (max-width: 768px) {
