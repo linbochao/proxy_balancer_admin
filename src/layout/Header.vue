@@ -56,6 +56,24 @@
           </div>
         </el-dropdown> -->
         
+        <!-- 系统切换开关 -->
+        <div class="system-switch">
+          <div 
+            class="switch-item" 
+            :class="{ active: currentSystem === 'registry' }"
+            @click="switchSystem('registry')"
+          >
+            注册中心
+          </div>
+          <div 
+            class="switch-item" 
+            :class="{ active: currentSystem === 'iot' }"
+            @click="switchSystem('iot')"
+          >
+            IOT平台
+          </div>
+        </div>
+        
         <el-dropdown trigger="click" @command="handleSettingCommand">
           <div class="action-item">
             <el-icon :size="20">
@@ -183,6 +201,18 @@ const pageTitle = computed(() => {
 const pageSubtitle = computed(() => {
   return '分布式代理负载均衡管理平台'
 })
+
+// 系统切换
+const currentSystem = ref<'registry' | 'iot'>('registry')
+const IOT_PLATFORM_URL = 'http://14.22.81.114:4000/'
+
+const switchSystem = (system: 'registry' | 'iot') => {
+  if (system === 'iot') {
+    window.location.href = IOT_PLATFORM_URL
+  } else {
+    currentSystem.value = 'registry'
+  }
+}
 
 const toggleSidebar = () => {
   emit('toggle-sidebar')
@@ -318,6 +348,42 @@ onUnmounted(() => {
   color: #909399;
 }
 
+/* 系统切换开关 */
+.system-switch {
+  display: flex;
+  align-items: center;
+  background-color: #f0f2f5;
+  border-radius: 20px;
+  padding: 3px;
+  margin-right: 16px;
+  height: 34px;
+}
+
+.switch-item {
+  padding: 6px 16px;
+  font-size: 13px;
+  color: #606266;
+  cursor: pointer;
+  border-radius: 17px;
+  transition: all 0.25s ease;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.switch-item:hover {
+  color: #409eff;
+}
+
+.switch-item.active {
+  background-color: #409eff;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.3);
+}
+
+.switch-item.active:hover {
+  color: #ffffff;
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -377,6 +443,23 @@ onUnmounted(() => {
   
   .header-action {
     margin-right: 10px;
+  }
+  
+  .system-switch {
+    margin-right: 8px;
+    height: 30px;
+  }
+  
+  .switch-item {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .switch-item {
+    padding: 5px 8px;
+    font-size: 11px;
   }
 }
 </style>
