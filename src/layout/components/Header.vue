@@ -137,8 +137,6 @@
 <script setup lang="ts">
 import {
   Menu,
-  Bell,
-  Search,
   Setting,
   User,
   ArrowDown,
@@ -147,12 +145,6 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import { clearAuth, getUserInfo } from '@/utils/auth'
 import { logout as logoutApi } from '@/api/auth'
-
-interface Notification {
-  id: string
-  title: string
-  time: string
-}
 
 interface UserInfo {
   name: string
@@ -166,13 +158,6 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const router = useRouter()
-
-const notificationCount = ref(3)
-const notifications = ref<Notification[]>([
-  { id: '1', title: 'Broker节点 broker-01 下线', time: '2分钟前' },
-  { id: '2', title: '内存使用率超过80%', time: '5分钟前' },
-  { id: '3', title: '新用户 admin 登录系统', time: '10分钟前' }
-])
 
 const savedUserInfo = getUserInfo()
 const userInfo = ref<UserInfo>({
@@ -215,10 +200,6 @@ const switchSystem = (system: 'registry' | 'iot') => {
 
 const toggleSidebar = () => {
   emit('toggle-sidebar')
-}
-
-const handleCommand = (_command: string) => {
-  notificationCount.value = Math.max(0, notificationCount.value - 1)
 }
 
 const handleSettingCommand = async (command: string) => {

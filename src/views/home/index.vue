@@ -142,7 +142,7 @@ import {
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import {
-  brokersOverview, brokersList, brokersDistribution,loads,
+  brokersOverview, brokersDistribution, loads,
   connectorsRuntimeQuality, connectorsDeviceCountsByAgentType,
 } from '@/api'
 import PieChart from '@/components/PieChart/index.vue'

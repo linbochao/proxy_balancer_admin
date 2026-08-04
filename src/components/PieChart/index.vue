@@ -91,7 +91,7 @@ function buildOption(): echarts.EChartsOption {
         text: centerText.sublabel
           ? `${centerText.label}\n${centerText.sublabel}`
           : centerText.label,
-        textAlign: 'center',
+        align: 'center',
         fill: '#303133',
         fontSize: 16,
         fontWeight: 'bold',

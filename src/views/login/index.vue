@@ -109,7 +109,7 @@
 
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { Setting, User, Lock, Message, Refresh, Loading } from '@element-plus/icons-vue'
+import { User, Lock, Message, Refresh, Loading } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { encrypt } from '@/utils/encryption'
@@ -134,7 +134,6 @@ import {
 
 const router = useRouter()
 const route = useRoute()
-const currentYear = new Date().getFullYear()
 
 const activeTab = ref<'password' | 'email'>('password')
 const pwdFormRef = ref<FormInstance>()

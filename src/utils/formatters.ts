@@ -13,9 +13,9 @@ export const commonStatusMap = {
 
 // 状态格式化器
 export function createStatusFormatter( statusKey: string = 'status', map?: Record<string, { text: string, class: string }>) {
-  const mergedMap = { ...commonStatusMap, ...map}
+  const mergedMap: Record<string, { text: string, class: string }> = { ...commonStatusMap, ...map}
   return (row: Record<string, any>) => {
-    const status = mergedMap[row[statusKey]] || mergedMap.DEFAULT
+    const status = mergedMap[row[statusKey] as string] || mergedMap.DEFAULT
     return h('span', { class: ['status-tag', status.class]}, [
         h('span', { class: 'status-dot'},),
          status.text

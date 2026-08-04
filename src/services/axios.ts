@@ -230,9 +230,9 @@ http.interceptors.response.use(
       isAuthBusinessError(response.data) &&
       !isAuthEndpoint(response.config)
     ) {
-      return handleAuthError(response.config);
+      return handleAuthError(response.config) as Promise<any>
     }
-    return response;
+    return response
   },
   async (error) => {
     // HTTP 401 — 跳过公开接口
