@@ -5,10 +5,6 @@ const API = {
     connectorsDistribution: '/oneths/register/api/connectors/distribution',  // 获取broker列表（扁平化 connectors）
     deviceRoutes: '/oneths/register/api/device-routes',  // 设备路由查询
     deviceRoutesAvailability: '/oneths/register/api/device-routes/availability',  // 设备路由可用性
-    getProxyDetail: '/proxy/detail',
-    createProxy: '/proxy/create',
-    updateProxy: '/proxy/update',
-    deleteProxy: '/proxy/delete',
     loads: '/oneths/register/api/brokers/loads',  // 获取broker负载数据
     brokersList: '/oneths/register/api/brokers',  // 获取broker列表
     brokersDetail: '/oneths/register/api/brokers/detail',  // 获取broker详情
@@ -17,6 +13,8 @@ const API = {
     connectorsRuntimeQuality: '/oneths/register/api/connectors/runtime-quality',  // 连接运行质量
     connectorsDeviceCountsByAgentType: '/oneths/register/api/connectors/device-counts-by-agent-type',  // 连接分类统计
     deviceInstanceQuality: '/oneths/register/api/connectors/device-instance-quality',  // 设备运行质量
+    operationsActions: '/oneths/register/api/operations/actions',  // 运维操作方向列表
+    operationsTasks: '/oneths/register/api/operations/tasks',  // 运维任务列表
 }
 
 export const regDevicesList = (params: any) => {
@@ -113,5 +111,42 @@ export const deviceInstanceQuality = () => {
     return request({
         url: API.deviceInstanceQuality,
         method: 'get',
+    })
+}
+
+export const operationsActions = () => {
+    return request({
+        url: API.operationsActions,
+        method: 'get',
+    })
+}
+
+export const operationsTasks = (params: {
+    category?: string
+    page: number
+    pageSize: number
+    includeArchived?: boolean
+    status?: string
+    keyword?: string
+}) => {
+    return request({
+        url: API.operationsTasks,
+        method: 'get',
+        params,
+    })
+}
+
+export const createOperationsTask = (data: {
+    actionId: string
+    batchSize?: number
+    brokerInstanceId?: string
+    connectorId?: string
+    mode?: string
+    requestId: string
+}) => {
+    return request({
+        url: API.operationsTasks,
+        method: 'post',
+        data,
     })
 }

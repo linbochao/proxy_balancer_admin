@@ -46,7 +46,7 @@
     </div>
 
     <!-- Broker负载 & 设备分布倾斜率 -->
-    <div class="middle-row">
+    <div class="middle-row" :style="{ height: rowHeight + 'px' }">
       <el-card class="half-card">
         <template #header>
           <div class="card-header">
@@ -100,7 +100,7 @@
     </div>
 
     <!-- 连接运行质量 & 连接分类 -->
-    <div class="bottom-row">
+    <div class="bottom-row" :style="{ height: rowHeight + 'px' }">
       <el-card class="half-card">
         <template #header>
           <div class="card-header">
@@ -147,6 +147,7 @@ import {
 } from '@/api'
 import PieChart from '@/components/PieChart/index.vue'
 import type { PieDataItem, CenterText } from '@/components/PieChart/index.vue'
+import { useDynamicHeight } from '@/composables/useDynamicHeight'
 
 // ---------------------------------------------------------------------------
 // 概览卡片
@@ -470,6 +471,23 @@ const handleResize = () => {
 }
 
 // ---------------------------------------------------------------------------
+// 动态行高 — 根据 viewport 自适应，避免固定高度导致的空白或截断
+// ---------------------------------------------------------------------------
+
+// 从 viewport 顶部向下逐层扣除的固定高度：
+//   Header(60) + MainContent padding-top + padding-bottom(40) + stats-grid(≈136) + 行间距(20)
+const FIXED_OFFSETS = [60, 40, 136, 20]
+
+const { containerHeight: totalAvailable } = useDynamicHeight(undefined, {
+  offsets: FIXED_OFFSETS,
+  minHeight: 560,   // 280 × 2（两行各不低于 280px）
+  maxHeight: 1000,  // 500 × 2（两行各不高于 500px）
+})
+
+/** 上下两行平分可用高度 */
+const rowHeight = computed(() => Math.round(totalAvailable.value / 2))
+
+// ---------------------------------------------------------------------------
 // 监听数据变化重新渲染
 // ---------------------------------------------------------------------------
 
@@ -497,7 +515,10 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .home-view {
-  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ---------------------------------------------------------------------------
@@ -509,6 +530,7 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .stat-card {
@@ -570,18 +592,29 @@ onBeforeUnmount(() => {
 
 .middle-row,
 .bottom-row {
-  height: 420px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  flex-shrink: 0;
+}
+
+.middle-row {
   margin-bottom: 20px;
-  ::after {
-    margin-bottom: 0px;
-  }
 }
 
 .half-card {
-  min-height: 360px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.half-card :deep(.el-card__body) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ---------------------------------------------------------------------------
@@ -606,14 +639,19 @@ onBeforeUnmount(() => {
    --------------------------------------------------------------------------- */
 
 .distribution-wrap {
-  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dist-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  margin: 20px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .dist-card {
@@ -637,6 +675,9 @@ onBeforeUnmount(() => {
 }
 
 .dist-progress-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -692,8 +733,8 @@ onBeforeUnmount(() => {
    --------------------------------------------------------------------------- */
 
 .chart-container {
-  width: 100%;
-  height: 300px;
+  flex: 1;
+  min-height: 200px;
 }
 
 /* ---------------------------------------------------------------------------

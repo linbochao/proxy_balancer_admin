@@ -42,7 +42,7 @@
             class="status-tag"
             :class="state.detail.status === 'STARTED' ? 'online' : 'offline'"
           >
-            {{ state.detail.status === 'STARTED' ? '运行中' : state.detail.status }}
+            {{ state.detail.status === 'STARTED' ? '运行中' : '离线' }}
           </span>
           <span v-else>--</span>
         </el-descriptions-item>
@@ -169,7 +169,7 @@ const statusFormatter = (row: Record<string, any>) => {
 // Nacos存活格式化
 const nacosAliveFormatter = (row: Record<string, any>) => {
   const isAlive = row.nacosAlive
-  return `<span class="status-tag ${isAlive ? 'status-online' : 'status-offline'}"><span class="status-dot"></span>${isAlive ? '存活' : '离线'}</span>`
+  return `<span class="status-tag ${isAlive ? 'status-suc' : 'status-unsuc'}"><span class="status-dot"></span>${isAlive ? '存活' : '离线'}</span>`
 }
 
 // Connector在线/总数格式化

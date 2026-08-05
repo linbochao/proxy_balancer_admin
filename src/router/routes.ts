@@ -110,6 +110,12 @@ export const routes = [
         component: () => import('../views/deviceQuery/index.vue'),
         meta: { title: '设备路由查询', icon: 'Search' }
       },
+      {
+        path: 'operations',
+        name: 'Operations',
+        component: () => import('../views/operations/index.vue'),
+        meta: { title: '运维', icon: 'Search' }
+      },
       // {
       //   path: 'settings',
       //   name: 'Settings',

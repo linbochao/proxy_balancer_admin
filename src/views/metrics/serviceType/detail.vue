@@ -53,9 +53,9 @@ const state = reactive({
 
 // 状态映射
 const statusMap: Record<string, { text: string; class: string }> = {
-  ONLINE: { text: '在线', class: 'status-online' },
-  OFFLINE: { text: '离线', class: 'status-offline' },
-  UNAVAILABLE: { text: '不稳定', class: 'status-unavailable' },
+  ONLINE: { text: '在线', class: 'status-suc' },
+  OFFLINE: { text: '离线', class: 'status-unsuc' },
+  UNAVAILABLE: { text: '不稳定', class: 'status-warn' },
 }
 
 // 状态格式化 - 返回 VNode

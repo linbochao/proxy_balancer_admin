@@ -12,7 +12,7 @@ import * as echarts from 'echarts'
 export interface PieDataItem {
   name: string
   value: number
-  itemStyle?: { color?: string; [key: string]: any }
+  itemStyle?: { color?: string;[key: string]: any }
   [key: string]: any
 }
 
@@ -91,6 +91,7 @@ function buildOption(): echarts.EChartsOption {
         text: centerText.sublabel
           ? `${centerText.label}\n${centerText.sublabel}`
           : centerText.label,
+        textAlign: 'center',
         align: 'center',
         fill: '#303133',
         fontSize: 16,

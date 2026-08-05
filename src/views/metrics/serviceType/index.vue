@@ -64,9 +64,14 @@
                 — {{ selectedConnector.connectorName }}
               </template>
             </span>
-            <template v-if="selectedConnector">
+            <div v-if="selectedConnector">
+              <el-button type="text" size="small" class="refresh-btn" @click.stop="onRefreshClick" title="刷新 Broker 列表">
+                <el-icon :size="16">
+                  <Refresh />
+                </el-icon>
+              </el-button>
               <span class="connector-port">端口: {{ selectedConnector.port }}</span>
-            </template>
+            </div>
           </div>
         </template>
 
@@ -89,6 +94,7 @@
 </template>
 
 <script setup lang="ts">
+import { Refresh } from '@element-plus/icons-vue'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
 import type { Column, TableBtn } from '@/components/ProTable/type'
 import { useRouter } from 'vue-router'
@@ -104,6 +110,7 @@ const {
   brokerList,
   brokerLoading,
   fetchList,
+  fetchBrokerList,
   selectConnector,
 } = useConnectorList(1) // agentType: 1 = 服务类型
 
@@ -136,6 +143,13 @@ const onOperationClick = (btn?: TableBtn, row?: Broker) => {
       const brokerInstanceId = row.brokerInstanceId
       router.push({ path: '/metrics/serviceType/detail', query: { connectorId, brokerInstanceId } })
     }
+  }
+}
+
+const onRefreshClick = () => {
+  const connectorId = selectedConnector.value?.connectorId
+  if (connectorId) {
+    fetchBrokerList(connectorId)
   }
 }
 
@@ -188,6 +202,12 @@ onMounted(() => {
 
 .connector-port {
   font-size: 12px;
+  color: #909399;
+}
+
+.refresh-btn {
+  margin-right: 8px;
+  padding: 0;
   color: #909399;
 }
 
