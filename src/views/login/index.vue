@@ -387,8 +387,15 @@ function switchTab(tab: 'password' | 'email') {
 
 /** 登录成功后跳转 */
 async function doRedirect() {
-  const redirect = (route.query.redirect as string) || '/home'
-  await router.push(redirect)
+  const redirectQuery = route.query.redirect
+  const redirect = typeof redirectQuery === 'string' && redirectQuery
+    ? redirectQuery
+    : '/home'
+  try {
+    await router.push(redirect)
+  } catch {
+    await router.replace('/home')
+  }
 }
 
 // ---------------------------------------------------------------------------
