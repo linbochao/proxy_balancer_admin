@@ -1,7 +1,10 @@
 import axios, {
   type AxiosInstance,
+  type AxiosResponse,
   type InternalAxiosRequestConfig,
+  type AxiosError,
 } from "axios";
+import { ElMessage } from "element-plus";
 import { getToken, setToken, getRefreshToken, getOrganizationId, clearAuth } from "@/utils/auth";
 
 export interface ApiResponse<T = unknown> {
@@ -61,6 +64,25 @@ http.interceptors.request.use((config) => {
 
 let isRedirecting = false;
 
+/**
+ * 强制登出（账号冲突处理）
+ * 当检测到账号已在其他地方登录时触发：
+ *   1. 清除本地所有 token 与用户信息
+ *   2. 显示警告消息
+ *   3. 延迟 800ms 后跳转至登录页
+ */
+function forceLogout(): void {
+  clearAuth();
+  if (!isRedirecting && window.location.pathname !== "/login") {
+    isRedirecting = true;
+    ElMessage.warning("您的账号已在其他地方登录，请重新登录");
+    setTimeout(() => {
+      window.location.href = "/login";
+      isRedirecting = false;
+    }, 800);
+  }
+}
+
 /** 判断响应是否为鉴权相关的业务错误 */
 function isAuthBusinessError(data: unknown): boolean {
   if (!data || typeof data !== "object") return false;
@@ -98,15 +120,9 @@ function isRefreshTokenRequest(config: InternalAxiosRequestConfig): boolean {
   return config.url.includes("/authentication/refresh");
 }
 
-/** 跳转到登录页（防重复跳转） */
+/** 跳转到登录页（防重复跳转）— 已委托给 forceLogout 处理账号冲突 */
 function redirectToLogin(): void {
-  clearAuth();
-  if (!isRedirecting && window.location.pathname !== "/login") {
-    isRedirecting = true;
-    window.location.href = `/login?redirect=${encodeURIComponent(
-      window.location.pathname + window.location.search
-    )}`;
-  }
+  forceLogout();
 }
 
 /** 统一处理鉴权错误：尝试刷新 token，失败则跳转登录页 */
@@ -221,30 +237,46 @@ async function handleAuthError(
     return Promise.reject(new Error("Token 刷新失败，请重新登录"));
   }
 }
+const num=ref(1)
 
 http.interceptors.response.use(
-  (response) => {
-    // 检查业务层鉴权错误（HTTP 200 但业务 code === 1 且消息包含令牌相关关键词）
-    // 跳过无需鉴权的公开接口（登录、验证码等）
-    if (
-      isAuthBusinessError(response.data) &&
-      !isAuthEndpoint(response.config)
-    ) {
-      return handleAuthError(response.config) as Promise<any>
+  (res: AxiosResponse<ApiResponse>) => {
+    const { code, message } = res.data
+    console.log('>>>>>>>>>>', code, message)
+    if (!code) return res
+    if(num.value>1) return res
+    if (code == 1 && message == 'Cloud Gateway 异常: 您已被顶下线!') {
+      num.value++
+      const newLocal = '';
+      
+      ElMessage.error(message || '登录已失效，请重新登录')
+      clearAuth()
+      window.sessionStorage.clear()
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 1000)
+      return Promise.reject(res.data)
+    } else if (code != 0) {
+      setTimeout(() => ElMessage.warning(message), 0)
     }
-    return response
+
+    return res
   },
-  async (error) => {
-    // HTTP 401 — 跳过公开接口
-    if (
-      error.response?.status === 401 &&
-      !isAuthEndpoint(error.config)
-    ) {
-      return handleAuthError(error.config);
+
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      
+      forceLogout()
+      return Promise.reject(error)
     }
-    // 网络错误等，直接抛出
-    return Promise.reject(error);
-  }
+
+    const msg = error.response?.data?.message
+      || error.message
+      || '网络异常，请稍后重试'
+      console.log('>>>>>>>>>>')
+    setTimeout(() => ElMessage.error(msg), 0)
+    return Promise.reject(error)
+  },
 );
 
 // ---------------------------------------------------------------------------

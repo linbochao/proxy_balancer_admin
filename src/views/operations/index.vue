@@ -95,12 +95,6 @@
         <div class="card-header">
           <span>
             任务列表
-            <template v-if="state.selectedCategory">
-              —
-              <el-tag size="small" :type="categoryTagType(state.selectedCategory)">
-                {{ state.selectedCategory }}
-              </el-tag>
-            </template>
           </span>
           <div class="header-right">
             <el-button
@@ -111,33 +105,12 @@
             >
               新建任务
             </el-button>
-            <span class="header-tip" v-if="state.total > 0">
+            <!-- <span class="header-tip" v-if="state.total > 0">
               共 {{ state.total }} 条记录
-            </span>
+            </span> -->
           </div>
         </div>
       </template>
-
-      <!-- 筛选栏 -->
-      <div class="filter-bar">
-        <el-input
-          v-model="state.keyword"
-          placeholder="搜索任务ID / 请求ID / 范围..."
-          clearable
-          style="width: 320px"
-          :prefix-icon="Search"
-          @input="onSearchInput"
-          @clear="onSearchClear"
-        />
-        <div class="archive-switch">
-          <span class="switch-label">包含归档</span>
-          <el-switch
-            v-model="state.includeArchived"
-            size="small"
-            @change="onFilterChange"
-          />
-        </div>
-      </div>
 
       <!-- 表格 -->
       <div class="table-section">
@@ -261,42 +234,65 @@
       >
         <el-form-item label="操作方向" required>
           <el-input
-            :model-value="state.createForm.actionId"
+            :model-value="selectedAction?.title || state.createForm.actionId"
             readonly
             disabled
           />
         </el-form-item>
-        <el-form-item label="Broker 实例 ID">
-          <el-input
+        <el-form-item label="Broker 实例" required>
+          <el-select
             v-model="state.createForm.brokerInstanceId"
-            placeholder="例如: broker-192.168.110.5-3000"
+            placeholder="请选择 Broker 实例"
+            style="width: 100%"
             clearable
-          />
+            filterable
+            :loading="state.brokerOptionsLoading"
+            @change="onBrokerChange"
+          >
+            <el-option
+              v-for="broker in state.brokerOptions"
+              :key="broker.value"
+              :label="broker.label"
+              :value="broker.value"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="Connector ID">
-          <el-input
+        <el-form-item v-if="showConnectorField" label="Connector">
+          <el-select
             v-model="state.createForm.connectorId"
-            placeholder="请输入 Connector ID"
+            placeholder="请选择 Connector"
+            style="width: 100%"
             clearable
-          />
+            filterable
+            :loading="state.connectorOptionsLoading"
+          >
+            <el-option
+              v-for="conn in state.connectorOptions"
+              :key="conn.value"
+              :label="conn.label"
+              :value="conn.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="执行模式" required>
           <el-select
             v-model="state.createForm.mode"
             style="width: 100%"
+            :disabled="isCheckCategory"
           >
-            <el-option label="DRY_RUN (试运行)" value="DRY_RUN" />
-            <el-option label="EXECUTE (正式执行)" value="EXECUTE" />
+            <el-option label="只检查" value="DRY_RUN" />
+            <el-option label="执行在线" value="APPLY" :disabled="isCheckCategory" />
           </el-select>
+          <div v-if="isCheckCategory" class="form-tip">校验类操作仅支持"只检查"模式</div>
         </el-form-item>
         <el-form-item label="批量大小">
-          <el-input-number
+          <el-select
             v-model="state.createForm.batchSize"
-            :min="1"
-            :max="10000"
-            :step="100"
             style="width: 100%"
-          />
+          >
+            <el-option label="500" value="500" />
+            <el-option label="1000" value="1000" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -320,7 +316,10 @@ import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import ProVirtualTable from '@/components/ProTable/ProVirtualTable.vue'
 import type { Column, TableBtn } from '@/components/ProTable/type'
-import { operationsActions, operationsTasks, createOperationsTask } from '@/api'
+import {
+  operationsActions, operationsTasks, createOperationsTask,
+  brokersList, connectorsByBroker,
+} from '@/api'
 import dayjs from 'dayjs'
 
 // ---------------------------------------------------------------------------
@@ -402,6 +401,12 @@ const state = reactive({
     batchSize: 500,
   },
   createLoading: false,
+
+  // 下拉选项
+  brokerOptions: [] as { label: string; value: string }[],
+  brokerOptionsLoading: false,
+  connectorOptions: [] as { label: string; value: string }[],
+  connectorOptionsLoading: false,
 })
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -460,6 +465,20 @@ const visibleCategoryGroups = computed<CategoryGroup[]>(() => {
     return allCategoryGroups.value
   }
   return allCategoryGroups.value.filter(g => g.category === state.activeCategoryTab)
+})
+
+// 当前选中的操作对象
+const selectedAction = computed<ActionItem | null>(() =>
+  state.actions.find(a => a.id === state.selectedActionId) || null,
+)
+
+// 是否为 CHECK 校验类操作：执行模式仅允许"只检查"，在线执行相关功能禁用
+const isCheckCategory = computed(() => selectedAction.value?.category === 'CHECK')
+
+// 是否显示连接下拉框：仅 connector 相关操作时可见
+const showConnectorField = computed(() => {
+  const title = selectedAction.value?.title?.toLowerCase() || ''
+  return title.includes('connector')
 })
 
 const categoryTagType = (category: string) => {
@@ -586,8 +605,14 @@ const fetchTasks = () => {
 // ---------------------------------------------------------------------------
 
 const onActionClick = (category: string, actionId: string) => {
-  state.selectedCategory = category
-  state.selectedActionId = actionId
+  // 在"全部"分类下，只选中操作卡片用于新建任务，不过滤表格数据
+  if (state.activeCategoryTab === '') {
+    state.selectedActionId = actionId
+  } else {
+    // 在特定分类下，保持原有逻辑：选中操作卡片并过滤表格
+    state.selectedCategory = category
+    state.selectedActionId = actionId
+  }
   state.currentPage = 1
   fetchTasks()
 }
@@ -646,15 +671,83 @@ const generateRequestId = () => {
   return `ops-${timestamp}-${random}`
 }
 
+/** 获取 Broker 下拉选项，加载完成后默认选中第一个并触发 Connector 加载 */
+const fetchBrokerOptions = () => {
+  state.brokerOptionsLoading = true
+  brokersList({ page: 1, pageSize: 200 })
+    .then((res: any) => {
+      const list = res.data?.records ?? res.data ?? []
+      state.brokerOptions = list.map((item: any) => ({
+        label: `${item.brokerInstanceId || item.host || ''} (${item.host || item.ip || '--'})`,
+        value: item.brokerInstanceId || item.host || '',
+      }))
+      // 默认选中第一个 broker
+      if (state.brokerOptions.length > 0 && !state.createForm.brokerInstanceId) {
+        state.createForm.brokerInstanceId = state.brokerOptions[0].value
+        // 选中后自动加载对应的 connector 列表
+        if (showConnectorField.value) {
+          fetchConnectorOptions(state.createForm.brokerInstanceId)
+        }
+      }
+    })
+    .catch(() => {
+      ElMessage.error('获取 Broker 列表失败')
+    })
+    .finally(() => {
+      state.brokerOptionsLoading = false
+    })
+}
+
+/**
+ * 获取指定 broker 下的 Connector 下拉选项
+ * @param brokerInstanceId broker 实例 ID，为空时清空列表
+ */
+const fetchConnectorOptions = (brokerInstanceId: string) => {
+  state.createForm.connectorId = ''
+  if (!brokerInstanceId) {
+    state.connectorOptions = []
+    return
+  }
+  state.connectorOptionsLoading = true
+  connectorsByBroker(brokerInstanceId)
+    .then((res: any) => {
+      const list = res.data?.items ?? res.data ?? []
+      state.connectorOptions = list.map((item: any) => ({
+        label: item.connectorName || '',
+        value: item.connectorId || item.id || '',
+      }))
+    })
+    .catch(() => {
+      ElMessage.error('获取 Connector 列表失败')
+      state.connectorOptions = []
+    })
+    .finally(() => {
+      state.connectorOptionsLoading = false
+    })
+}
+
+/**
+ * Broker 下拉选项值变化时，联动加载对应的 Connector 数据
+ */
+const onBrokerChange = (value: string) => {
+  if (showConnectorField.value) {
+    fetchConnectorOptions(value)
+  }
+}
+
 const openCreateDialog = () => {
   state.createForm = {
     actionId: state.selectedActionId,
     brokerInstanceId: '',
     connectorId: '',
-    mode: 'DRY_RUN',
+    mode: isCheckCategory.value ? 'DRY_RUN' : 'DRY_RUN',
     batchSize: 500,
   }
+  state.connectorOptions = []
   state.createVisible = true
+
+  // 打开弹窗时加载 broker 列表（默认选中第一个并自动触发 connector 加载）
+  fetchBrokerOptions()
 }
 
 const submitCreateTask = () => {
@@ -947,6 +1040,14 @@ onBeforeUnmount(() => {
   color: #f56c6c;
   font-weight: 500;
   word-break: break-all;
+}
+
+/* ===== 新建任务表单提示 ===== */
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
 /* ===== 全局滚动条适配 ===== */

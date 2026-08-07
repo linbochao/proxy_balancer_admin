@@ -2,6 +2,7 @@ import {  request } from '@/services/axios'
 const API = {
     regDevicesList: '/oneths/register/api/connectors/instances/registered-devices',  // 获取注册设备列表
     connectorsByAgentType: '/oneths/register/api/connectors/connectors-by-agent-type',   // 获取连接列表（扁平化 connectors）
+    connectorsByBroker: '/oneths/register/api/brokers/connectors',  // 获取指定 broker 下的 connectors 列表
     connectorsDistribution: '/oneths/register/api/connectors/distribution',  // 获取broker列表（扁平化 connectors）
     deviceRoutes: '/oneths/register/api/device-routes',  // 设备路由查询
     deviceRoutesAvailability: '/oneths/register/api/device-routes/availability',  // 设备路由可用性
@@ -30,6 +31,17 @@ export const connectorsByAgentType = (params: { agentType: number }) => {
         url: API.connectorsByAgentType,
         method: 'get',
         params,
+    })
+}
+
+/**
+ * 获取指定 broker 下的 connectors 列表
+ * @param brokerInstanceId broker 实例 ID，例如 broker-192.168.110.5-3000
+ */
+export const connectorsByBroker = (brokerInstanceId: string) => {
+    return request({
+        url: `${API.connectorsByBroker}/${brokerInstanceId}`,
+        method: 'get',
     })
 }
 

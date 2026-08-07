@@ -7,6 +7,7 @@
  */
 
 const USER_TOKEN = 'USER_TOKEN'
+const USER_TOKEN_KEY = 'USER_TOKEN_KEY'
 const REFRESH_TOKEN = 'refresh_token'
 const USER_INFO = 'user_info'
 const REMEMBER_ME = 'remember_me'
@@ -175,5 +176,8 @@ export function clearAuth(): void {
   removeRefreshToken()
   removeUserInfo()
   removeOrganizationInfo()
+  // 强制登出时清除所有 token 相关的存储 key
+  localStorage.removeItem(USER_TOKEN_KEY)
+  sessionStorage.removeItem(USER_TOKEN_KEY)
   localStorage.removeItem(REMEMBER_ME)
 }
