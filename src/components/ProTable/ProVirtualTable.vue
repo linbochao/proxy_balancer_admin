@@ -18,7 +18,7 @@
       <el-auto-resizer>
         <template #default="{ height, width }">
           <el-table-v2 ref="tableRef" :columns="getComputedColumns(width)" :data="data"
-            :width="Math.max(width || 0, totalMinWidth)" :height="tableHeight(height)" v-loading="loading"
+            :width="width || totalMinWidth" :height="tableHeight(height)" v-loading="loading"
             :scrollbar-always-on="true" @cell-click="onCellClick" @row-click="onRowClick" />
         </template>
       </el-auto-resizer>
@@ -263,18 +263,6 @@ defineExpose({
   overflow: hidden;
 }
 
-:deep(.el-table-v2) {
-  min-width: 100%;
-}
-
-:deep(.el-table-v2 .el-table-v2__root) {
-  min-width: 100%;
-}
-
-:deep(.el-table-v2__header-wrapper) {
-  width: 100%;
-}
-
 :deep(.el-table-v2__header-wrapper th) {
   background-color: #fafafa;
   color: #606266;
@@ -282,10 +270,6 @@ defineExpose({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-:deep(.el-table-v2__body-wrapper) {
-  width: 100%;
 }
 
 :deep(.el-table-v2__row) {

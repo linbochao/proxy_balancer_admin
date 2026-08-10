@@ -65,7 +65,7 @@
               </template>
             </span>
             <div v-if="selectedConnector">
-              <el-button type="text" size="small" class="refresh-btn" @click.stop="onRefreshClick" title="刷新 Broker 列表">
+              <el-button link size="small" class="refresh-btn" @click.stop="onRefreshClick" title="刷新 Broker 列表">
                 <el-icon :size="16">
                  <Refresh />
                 </el-icon>
