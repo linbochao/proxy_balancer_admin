@@ -133,7 +133,6 @@ const menuItems = computed<MenuItem[]>(() => {
       return item
     })
   }
-  console.log('menuItems:',buildMenu(root.children, ''))  // 输出菜单树结构
   return buildMenu(root.children, '')
 })
 

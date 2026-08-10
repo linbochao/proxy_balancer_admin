@@ -48,12 +48,6 @@
                     <Loading />
                   </el-icon>
                 </div>
-                <div class="captcha-mask">
-                  <el-icon :size="16">
-                    <Refresh />
-                  </el-icon>
-                  <span>点击刷新</span>
-                </div>
               </div>
             </div>
           </el-form-item>
@@ -582,25 +576,6 @@ onUnmounted(() => {
 
 .captcha-loading-icon {
   animation: spin 1s linear infinite;
-}
-
-.captcha-mask {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  color: #fff;
-  font-size: 11px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.captcha-img-wrapper:hover .captcha-mask {
-  opacity: 1;
 }
 
 @keyframes spin {

@@ -14,18 +14,10 @@
     </el-tabs> -->
 
     <!-- 操作分类标签栏 -->
-    <el-tabs
-      v-model="state.activeCategoryTab"
-      class="category-tabs"
-      @tab-change="onCategoryTabChange"
-    >
+    <el-tabs v-model="state.activeCategoryTab" class="category-tabs" @tab-change="onCategoryTabChange">
       <el-tab-pane label="全部" name="" />
-      <el-tab-pane
-        v-for="group in allCategoryGroups"
-        :key="group.category"
-        :label="group.category"
-        :name="group.category"
-      />
+      <el-tab-pane v-for="group in allCategoryGroups" :key="group.category" :label="group.category"
+        :name="group.category" />
     </el-tabs>
 
     <!-- 操作方向卡片区 -->
@@ -33,15 +25,9 @@
       <!-- 全部分类：所有卡片平铺，不分板块 -->
       <div v-if="!state.activeCategoryTab" class="category-group">
         <div class="action-cards">
-          <div
-            v-for="action in allActions"
-            :key="action.id"
-            class="action-card"
-            :class="{
-              'is-active': state.selectedActionId === action.id,
-            }"
-            @click="onActionClick(action.category, action.id)"
-          >
+          <div v-for="action in allActions" :key="action.id" class="action-card" :class="{
+            'is-active': state.selectedActionId === action.id,
+          }" @click="onActionClick(action.category, action.id)">
             <div class="action-card-title">{{ action.title }}</div>
             <div class="action-card-meta">
               <el-tag size="small" type="info">{{ action.scope }}</el-tag>
@@ -53,31 +39,17 @@
 
       <!-- 单个分类：带分类头部 -->
       <template v-else>
-        <div
-          v-for="group in visibleCategoryGroups"
-          :key="group.category"
-          class="category-group"
-        >
+        <div v-for="group in visibleCategoryGroups" :key="group.category" class="category-group">
           <div class="category-header">
-            <el-tag
-              :type="categoryTagType(group.category)"
-              size="small"
-              effect="dark"
-            >
+            <el-tag :type="categoryTagType(group.category)" size="small" effect="dark">
               {{ group.category }}
             </el-tag>
             <span class="category-count">{{ group.actions.length }} 个操作</span>
           </div>
           <div class="action-cards">
-            <div
-              v-for="action in group.actions"
-              :key="action.id"
-              class="action-card"
-              :class="{
-                'is-active': state.selectedActionId === action.id,
-              }"
-              @click="onActionClick(group.category, action.id)"
-            >
+            <div v-for="action in group.actions" :key="action.id" class="action-card" :class="{
+              'is-active': state.selectedActionId === action.id,
+            }" @click="onActionClick(group.category, action.id)">
               <div class="action-card-title">{{ action.title }}</div>
               <div class="action-card-meta">
                 <el-tag size="small" type="info">{{ action.scope }}</el-tag>
@@ -97,12 +69,7 @@
             任务列表
           </span>
           <div class="header-right">
-            <el-button
-              v-if="state.selectedActionId"
-              type="primary"
-              size="small"
-              @click="openCreateDialog"
-            >
+            <el-button v-if="state.selectedActionId" type="primary" size="small" @click="openCreateDialog">
               新建任务
             </el-button>
             <!-- <span class="header-tip" v-if="state.total > 0">
@@ -114,33 +81,24 @@
 
       <!-- 表格 -->
       <div class="table-section">
-        <ProVirtualTable
-          :columns="columns"
-          :data="state.taskList"
-          :show-toolbar="true"
-          :loading="state.loading"
-          @table-row-click="onOperationClick"
-        />
+        <ProVirtualTable :columns="columns" :data="state.taskList" :show-toolbar="true" :loading="state.loading"
+          @table-row-click="onOperationClick">
+          <template #task="{ row }">
+            <div class="task-cell">
+              <span class="task-title">{{ row.actionTitle || '--' }}</span>
+              <span class="task-id">{{ row.id || '--' }}</span>
+            </div>
+          </template>
+        </ProVirtualTable>
       </div>
 
       <!-- 分页 -->
-      <Pagination
-        v-if="state.total > 0"
-        v-model:page-number="state.currentPage"
-        v-model:page-size="state.pageSize"
-        :total="state.total"
-        @change="fetchTasks"
-      />
+      <Pagination v-if="state.total > 0" v-model:page-number="state.currentPage" v-model:page-size="state.pageSize"
+        :total="state.total" @change="fetchTasks" />
     </el-card>
 
     <!-- 详情弹窗 -->
-    <el-dialog
-      v-model="state.detailVisible"
-      title="任务详情"
-      width="720px"
-      :close-on-click-modal="false"
-      destroy-on-close
-    >
+    <el-dialog v-model="state.detailVisible" title="任务详情" width="720px" :close-on-click-modal="false" destroy-on-close>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="任务ID" :span="2">
           {{ state.detail.id || '--' }}
@@ -163,15 +121,11 @@
         <el-descriptions-item label="Connector ID">
           {{ state.detail.connectorId || '--' }}
         </el-descriptions-item>
-        <el-descriptions-item label="范围">
-          {{ state.detail.scope || '--' }}
+        <el-descriptions-item label="结果">
+          {{ state.detail.result || '--' }}
         </el-descriptions-item>
         <el-descriptions-item label="状态">
-          <span
-            v-if="state.detail.status"
-            class="status-tag"
-            :class="statusClass(state.detail.status)"
-          >
+          <span v-if="state.detail.status" class="status-tag" :class="statusClass(state.detail.status)">
             {{ statusLabel(state.detail.status) }}
           </span>
           <span v-else>--</span>
@@ -182,26 +136,11 @@
         <el-descriptions-item label="操作人">
           {{ state.detail.operator || '--' }}
         </el-descriptions-item>
-        <el-descriptions-item label="进度">
-          <div class="detail-progress" v-if="state.detail.progress != null">
-            <div class="detail-progress-bar">
-              <div
-                class="detail-progress-fill"
-                :style="{ width: state.detail.progress + '%' }"
-              ></div>
-            </div>
-            <span>{{ state.detail.progress }}%</span>
-          </div>
-          <span v-else>--</span>
+        <el-descriptions-item label="范围" :span="2">
+          {{ state.detail.scope || '--' }}
         </el-descriptions-item>
-        <el-descriptions-item label="结果" :span="2">
-          {{ state.detail.result || '--' }}
-        </el-descriptions-item>
-        <el-descriptions-item
-          v-if="state.detail.status === 'FAILED' && state.detail.errorMessage"
-          label="错误信息"
-          :span="2"
-        >
+        <el-descriptions-item v-if="state.detail.status === 'FAILED' && state.detail.errorMessage" label="错误信息"
+          :span="2">
           <span class="error-text">{{ state.detail.errorMessage }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="开始时间">
@@ -220,76 +159,35 @@
     </el-dialog>
 
     <!-- 新建任务弹窗 -->
-    <el-dialog
-      v-model="state.createVisible"
-      title="新建运维任务"
-      width="560px"
-      :close-on-click-modal="false"
-      destroy-on-close
-    >
-      <el-form
-        label-width="120px"
-        :model="state.createForm"
-        @submit.prevent="submitCreateTask"
-      >
+    <el-dialog v-model="state.createVisible" title="新建运维任务" width="560px" :close-on-click-modal="false"
+      destroy-on-close>
+      <el-form label-width="120px" :model="state.createForm" @submit.prevent="submitCreateTask">
         <el-form-item label="操作方向" required>
-          <el-input
-            :model-value="selectedAction?.title || state.createForm.actionId"
-            readonly
-            disabled
-          />
+          <el-input :model-value="selectedAction?.title || state.createForm.actionId" readonly disabled />
         </el-form-item>
         <el-form-item label="Broker 实例" required>
-          <el-select
-            v-model="state.createForm.brokerInstanceId"
-            placeholder="请选择 Broker 实例"
-            style="width: 100%"
-            clearable
-            filterable
-            :loading="state.brokerOptionsLoading"
-            @change="onBrokerChange"
-          >
-            <el-option
-              v-for="broker in state.brokerOptions"
-              :key="broker.value"
-              :label="broker.label"
-              :value="broker.value"
-            />
+          <el-select v-model="state.createForm.brokerInstanceId" placeholder="请选择 Broker 实例" style="width: 100%"
+            clearable filterable :loading="state.brokerOptionsLoading" @change="onBrokerChange">
+            <el-option v-for="broker in state.brokerOptions" :key="broker.value" :label="broker.label"
+              :value="broker.value" />
           </el-select>
         </el-form-item>
         <el-form-item v-if="showConnectorField" label="Connector">
-          <el-select
-            v-model="state.createForm.connectorId"
-            placeholder="请选择 Connector"
-            style="width: 100%"
-            clearable
-            filterable
-            :loading="state.connectorOptionsLoading"
-          >
-            <el-option
-              v-for="conn in state.connectorOptions"
-              :key="conn.value"
-              :label="conn.label"
-              :value="conn.value"
-            />
+          <el-select v-model="state.createForm.connectorId" placeholder="请选择 Connector" style="width: 100%" clearable
+            filterable :loading="state.connectorOptionsLoading">
+            <el-option v-for="conn in state.connectorOptions" :key="conn.value" :label="conn.label"
+              :value="conn.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="执行模式" required>
-          <el-select
-            v-model="state.createForm.mode"
-            style="width: 100%"
-            :disabled="isCheckCategory"
-          >
+          <el-select v-model="state.createForm.mode" style="width: 100%" :disabled="isCheckCategory">
             <el-option label="只检查" value="DRY_RUN" />
-            <el-option label="执行在线" value="APPLY" :disabled="isCheckCategory" />
+            <el-option label="执行修复" value="APPLY" :disabled="isCheckCategory" />
           </el-select>
           <div v-if="isCheckCategory" class="form-tip">校验类操作仅支持"只检查"模式</div>
         </el-form-item>
         <el-form-item label="批量大小">
-          <el-select
-            v-model="state.createForm.batchSize"
-            style="width: 100%"
-          >
+          <el-select v-model="state.createForm.batchSize" style="width: 100%">
             <el-option label="500" value="500" />
             <el-option label="1000" value="1000" />
           </el-select>
@@ -299,11 +197,7 @@
         <el-button @click="state.createVisible = false" :disabled="state.createLoading">
           取消
         </el-button>
-        <el-button
-          type="primary"
-          :loading="state.createLoading"
-          @click="submitCreateTask"
-        >
+        <el-button type="primary" :loading="state.createLoading" @click="submitCreateTask">
           确认创建
         </el-button>
       </template>
@@ -486,7 +380,7 @@ const categoryTagType = (category: string) => {
     CHECK: 'primary',
     RECALC: 'warning',
     CLEAR: 'danger',
-    SYNC: 'success',
+    SYNC: 'danger',
   }
   return typeMap[category] || 'info'
 }
@@ -506,34 +400,17 @@ const statusFormatter = (row: Record<string, any>) => {
   return `<span class="status-tag ${info.class}"><span class="status-dot"></span>${info.label}</span>`
 }
 
-const progressFormatter = (row: Record<string, any>) => {
-  const progress = row.progress ?? 0
-  let color = '#67c23a'
-  if (row.status === 'FAILED') color = '#f56c6c'
-  else if (row.status === 'RUNNING') color = '#409eff'
-  return `<div style="display:flex;align-items:center;gap:6px;min-width:80px;">
-    <div style="flex:1;height:6px;background:#ebeef5;border-radius:3px;overflow:hidden;">
-      <div style="height:100%;border-radius:3px;width:${progress}%;background:${color};"></div>
-    </div>
-    <span style="font-size:12px;color:#606266;">${progress}%</span>
-  </div>`
-}
-
 const timeFormatter = (_row: Record<string, any>, _col: any, cellValue: any) => {
   if (!cellValue) return '--'
   return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
 }
 
 const columns = computed<Column[]>(() => [
-  { prop: 'id', label: '任务ID', minWidth: 200, showOverflowTooltip: true },
-  { prop: 'requestId', label: '请求ID', minWidth: 180, showOverflowTooltip: true },
-  { prop: 'actionTitle', label: '操作名称', minWidth: 150 },
-  { prop: 'scope', label: '范围', minWidth: 200, showOverflowTooltip: true },
-  { prop: 'status', label: '状态', minWidth: 100, formatter: statusFormatter },
+  { prop: 'task', label: '任务', minWidth: 310, slot: 'task' },
+  { prop: 'scope', label: '范围', minWidth: 380, showOverflowTooltip: true },
   { prop: 'mode', label: '模式', minWidth: 90 },
-  { prop: 'operator', label: '操作人', minWidth: 100 },
-  { prop: 'progress', label: '进度', minWidth: 120, formatter: progressFormatter },
-  { prop: 'startedAt', label: '开始时间', minWidth: 160, formatter: timeFormatter },
+  { prop: 'status', label: '状态', minWidth: 100, formatter: statusFormatter },
+  { prop: 'result', label: '结果摘要', minWidth: 160 },
   { prop: 'updatedAt', label: '更新时间', minWidth: 160, formatter: timeFormatter },
   { prop: 'operation', label: '操作', type: 'operation', tableBtns: operationBtns, minWidth: 80 },
 ])
@@ -957,6 +834,32 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+/* ===== 任务列双行展示 ===== */
+.task-cell {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+  min-width: 0;
+}
+
+.task-title {
+  font-weight: 500;
+  color: #303133;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-id {
+  font-size: 12px;
+  color: #909399;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ===== 状态标签 ===== */
 .status-tag {
   display: inline-flex;
@@ -1011,13 +914,6 @@ onBeforeUnmount(() => {
 
 .status-warn .status-dot {
   background-color: #e6a23c;
-}
-
-/* ===== 详情弹窗进度条 ===== */
-.detail-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .detail-progress-bar {

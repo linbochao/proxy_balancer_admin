@@ -242,7 +242,6 @@ const num=ref(1)
 http.interceptors.response.use(
   (res: AxiosResponse<ApiResponse>) => {
     const { code, message } = res.data
-    console.log('>>>>>>>>>>', code, message)
     if (!code) return res
     if(num.value>1) return res
     if (code == 1 && message == 'Cloud Gateway 异常: 您已被顶下线!') {
@@ -273,7 +272,6 @@ http.interceptors.response.use(
     const msg = error.response?.data?.message
       || error.message
       || '网络异常，请稍后重试'
-      console.log('>>>>>>>>>>')
     setTimeout(() => ElMessage.error(msg), 0)
     return Promise.reject(error)
   },

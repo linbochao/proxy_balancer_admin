@@ -65,11 +65,11 @@
                 <div class="card-title-row">
                   <span class="card-title">{{ route.uniqueId || route.deviceId }}</span>
                   <el-tag
-                    :type="route.routeStatus === 'ONLINE' ? 'success' : 'danger'"
+                    :type="route.routeStatus === 'ONLINE' ? 'success' : ( route.routeStatus === 'UNAVAILABLE' ? 'warning' : 'danger' )"
                     size="small"
                     effect="dark"
                   >
-                    {{ route.routeStatus === 'ONLINE' ? '在线' : '离线' }}
+                    {{ route.routeStatus === 'ONLINE' ? '在线' : ( route.routeStatus === 'UNAVAILABLE' ? '不稳定' : '离线' ) }}
                   </el-tag>
                 </div>
                 <div class="card-subtitle">
@@ -165,10 +165,10 @@
                   <span class="detail-label">设备路由</span>
                   <span class="detail-value">
                     <el-tag
-                      :type="state.availabilityData.routeStatus === 'ONLINE' ? 'success' : 'danger'"
+                      :type="state.availabilityData.routeStatus === 'ONLINE' ? 'success' : ( state.availabilityData.routeStatus === 'UNAVAILABLE' ? 'warning' : 'danger' )"
                       size="small"
                     >
-                      {{ state.availabilityData.routeStatus === 'ONLINE' ? '在线' : '离线' }}
+                      {{ state.availabilityData.routeStatus === 'ONLINE' ? '在线' : ( state.availabilityData.routeStatus === 'UNAVAILABLE' ? '不稳定' : '离线' ) }}
                     </el-tag>
                   </span>
                 </div>
