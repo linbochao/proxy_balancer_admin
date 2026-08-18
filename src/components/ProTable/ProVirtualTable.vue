@@ -28,7 +28,10 @@
 
 <script setup lang="ts">
 import { Grid } from '@element-plus/icons-vue'
+import { useSlots } from 'vue'
 import type { Column, TableBtn } from './type'
+
+const slots = useSlots()
 
 const props = withDefaults(
   defineProps<{
@@ -214,20 +217,24 @@ function buildColumnConfig(col: Column, width: number) {
     title: col.label,
     dataKey: col.prop,
     width: width,
-    align: col.align ?? 'center',
+    align: col.align ?? 'left',
     sortable: col.sortable,
-    cellRenderer: col.formatter
+    cellRenderer: col.slot && slots[col.slot]
+      ? ({ rowData, rowIndex }: { rowData: any; rowIndex: number }) => {
+          return slots[col.slot!]!({ row: rowData, rowIndex })
+        }
+      : col.formatter
       ? ({ cellData, rowData, rowIndex }: { cellData: any; rowData: any; rowIndex: number }) => {
-        if (!col.formatter) return cellData
-        const result = col.formatter(rowData, col, cellData, rowIndex)
-        if (result && typeof result === 'object' && '__v_isVNode' in result) {
+          if (!col.formatter) return cellData
+          const result = col.formatter(rowData, col, cellData, rowIndex)
+          if (result && typeof result === 'object' && '__v_isVNode' in result) {
+            return result
+          }
+          if (typeof result === 'string') {
+            return h('div', { innerHTML: result })
+          }
           return result
         }
-        if (typeof result === 'string') {
-          return h('div', { innerHTML: result })
-        }
-        return result
-      }
       : undefined,
   }
 }
