@@ -115,7 +115,7 @@ export const routes = [
         path: 'operations',
         name: 'Operations',
         component: () => import('../views/operations/index.vue'),
-        meta: { title: '运维', icon: 'Search' }
+        meta: { title: '运维', icon: 'SetUp' }
       },
       // {
       //   path: 'settings',

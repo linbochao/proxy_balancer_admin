@@ -1,18 +1,5 @@
 <template>
   <div class="operations-view">
-    <!-- 状态标签栏 -->
-    <!-- <el-tabs
-      v-model="state.activeStatusTab"
-      class="status-tabs"
-      @tab-change="onStatusTabChange"
-    >
-      <el-tab-pane label="全部" name="" />
-      <el-tab-pane label="待处理" name="PENDING" />
-      <el-tab-pane label="运行中" name="RUNNING" />
-      <el-tab-pane label="已完成" name="SUCCEEDED" />
-      <el-tab-pane label="失败" name="FAILED" />
-    </el-tabs> -->
-
     <!-- 操作分类标签栏 -->
     <el-tabs v-model="state.activeCategoryTab" class="category-tabs" @tab-change="onCategoryTabChange">
       <el-tab-pane label="全部" name="" />
@@ -462,6 +449,9 @@ const fetchTasks = () => {
   }
   if (state.keyword) {
     params.keyword = state.keyword
+  }
+  if (state.selectedActionId) {
+    params.actionId = state.selectedActionId
   }
   operationsTasks(params as any)
     .then((res: any) => {

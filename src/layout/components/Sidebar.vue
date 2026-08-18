@@ -61,7 +61,8 @@ import {
   Files,
   User,
   Monitor,
-  Search
+  Search,
+  SetUp
 } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { routes } from '@/router/routes'
@@ -100,6 +101,7 @@ const iconMap: Record<string, any> = {
   Database: DataBoard,
   BarChart3: PieChart,
   Search: Search,
+  SetUp: SetUp
 }
 
 // 使用 computed 生成菜单（也可用普通变量，但 computed 更规范）
