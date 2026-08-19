@@ -13,6 +13,7 @@ const API = {
     brokersDistribution: '/oneths/register/api/brokers/distribution',  // 设备分布倾斜率
     connectorsRuntimeQuality: '/oneths/register/api/connectors/runtime-quality',  // 连接运行质量
     connectorsDeviceCountsByAgentType: '/oneths/register/api/connectors/device-counts-by-agent-type',  // 连接分类统计
+    connectorsReportProcessing: '/oneths/register/api/observability/report-processing',  // Register 处理概览
     deviceInstanceQuality: '/oneths/register/api/connectors/device-instance-quality',  // 设备运行质量
     operationsActions: '/oneths/register/api/operations/actions',  // 运维操作方向列表
     operationsTasks: '/oneths/register/api/operations/tasks',  // 运维任务列表
@@ -129,6 +130,13 @@ export const deviceInstanceQuality = () => {
 export const operationsActions = () => {
     return request({
         url: API.operationsActions,
+        method: 'get',
+    })
+}
+
+export const connectorsReportProcessing = () => {
+    return request({
+        url: API.connectorsReportProcessing,
         method: 'get',
     })
 }

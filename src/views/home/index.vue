@@ -27,12 +27,25 @@
         </div>
         <template v-else>
           <div class="stat-info">
-            <template
-              style="display: flex;flex-direction: column;align-items: center;justify-content: center;gap: 10px;">
+            <template style="display: flex;flex-direction: column;align-items: center;justify-content: center;gap: 10px;">
               <el-tooltip :content="card.tooltip" placement="top" effect="dark">
                 <div class="stat-label">{{ card.label }}</div>
               </el-tooltip>
-              <div class="stat-value">{{ card.value }}</div>
+              <div class="stat-value">
+                <template v-if="card.key === 'registerProcessing'">
+                  <div v-if="registerLoading">加载中...</div>
+                  <div v-else-if="registerError">错误: {{ registerError }}</div>
+                  <div v-else>
+                    <div style="font-size:20px;font-weight:700">{{ state.registerData.todayMessageCount ?? 0 }}</div>
+                    <div style="font-size:12px;color:#909399">今日处理消息数</div>
+                    <div style="height:6px"></div>
+                    <div style="font-size:16px">累计: {{ state.registerData.totalMessageCount ?? 0 }}</div>
+                  </div>
+                </template>
+                <template v-else>
+                  {{ card.value }}
+                </template>
+              </div>
             </template>
             <div class="stat-icon" :style="{ backgroundColor: card.bgColor, color: card.color }">
               <el-icon :size="28">
@@ -133,6 +146,24 @@
         />
       </el-card>
     </div>
+
+    <!-- Register 处理分组柱状图 -->
+    <div style="margin-top:20px">
+      <el-card>
+        <template #header>
+          <div class="card-header"><span>Register 处理概览 - 分组柱状图</span></div>
+        </template>
+
+        <div style="min-height:260px;">
+          <div v-if="registerLoading" style="padding:40px;text-align:center">加载中...</div>
+          <div v-else-if="registerError" style="padding:20px;color:#f56c6c">获取数据出错：{{ registerError }}</div>
+          <div v-else>
+            <div v-if="!state.registerData || Object.keys(state.registerData).length === 0" style="padding:40px;text-align:center;color:#909399">暂无数据</div>
+            <Chart v-else :option="registerChartOption" height="360px" />
+          </div>
+        </div>
+      </el-card>
+    </div>
   </div>
 </template>
 
@@ -143,9 +174,10 @@ import {
 import * as echarts from 'echarts'
 import {
   brokersOverview, brokersDistribution, loads,
-  connectorsRuntimeQuality, connectorsDeviceCountsByAgentType,
+  connectorsRuntimeQuality, connectorsDeviceCountsByAgentType, connectorsReportProcessing,
 } from '@/api'
 import PieChart from '@/components/PieChart/index.vue'
+import Chart from '@/components/Chart/index.vue'
 import type { PieDataItem, CenterText } from '@/components/PieChart/index.vue'
 import { useDynamicHeight } from '@/composables/useDynamicHeight'
 
@@ -188,6 +220,11 @@ const state = reactive({
   refreshInterval: 0,
   isRefreshing: false,
 
+  // register processing
+  registerData: {} as Record<string, any>,
+  registerLoading: false,
+  registerError: '',
+
   conTypeTotal: 0,        // 新增
 })
 
@@ -201,6 +238,7 @@ const refreshAll = () => {
     fetchDistribution(),
     fetchRuntimeQuality(),
     fetchAgentType(),
+    fetchRegisterProcessing(),
   ]).finally(() => {
     state.isRefreshing = false
   })
@@ -261,6 +299,15 @@ const overviewCards = computed<OverviewCard[]>(() => {
       color: '#409eff',
     },
     {
+      key: 'registerProcessing',
+      label: 'Register 处理概览',
+      value: '',
+      tooltip: '今日与累计处理消息数',
+      icon: DataBoard,
+      bgColor: 'rgba(64, 158, 255, 0.06)',
+      color: '#409eff',
+    },
+    {
       key: 'refresh',
       label: '数据刷新',
       value: '',
@@ -270,6 +317,132 @@ const overviewCards = computed<OverviewCard[]>(() => {
       color: '#67c23a',
     },
   ]
+})
+
+// ---------------------------------------------------------------------------
+// Register 处理概览 - API 调用与图表数据处理
+// ---------------------------------------------------------------------------
+const fetchRegisterProcessing = () => {
+  state.registerLoading = true
+  state.registerError = ''
+  return connectorsReportProcessing()
+    .then((res: any) => {
+      const data = res.data ?? res
+      // 接口标准格式：{ code:0, data: {...} }
+      const payload = data.registerMetrics ?? data
+      state.registerData = payload ?? {}
+    })
+    .catch((err: any) => {
+      state.registerError = err?.message || '获取数据失败'
+      state.registerData = {}
+    })
+    .finally(() => { state.registerLoading = false })
+}
+
+// 构建 ECharts option（通用分组柱状图，支持对数 Y 轴以兼容量级差异大的数据）
+const registerChartOption = computed(() => {
+  const raw = { ...state.registerData }
+  if (!raw || Object.keys(raw).length === 0) {
+    return {
+      title: { text: '无可显示数据' },
+    }
+  }
+
+  const ignore = ['updatedAt']
+  ignore.forEach((k) => delete raw[k])
+
+  const keys = Object.keys(raw)
+  if (keys.length === 0) {
+    return { title: { text: '无可显示数据' } }
+  }
+
+  // 对数 Y 轴通用配置
+  const logYAxis = {
+    type: 'log' as const,
+    logBase: 10,
+    min: 1,
+    axisLabel: {
+      formatter: (value: number) => {
+        if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M'
+        if (value >= 1000) return (value / 1000).toFixed(1) + 'K'
+        return String(value)
+      },
+    },
+  }
+
+  // 值为对象 → 分组柱状图
+  const firstVal = raw[keys[0]]
+  if (firstVal && typeof firstVal === 'object' && !Array.isArray(firstVal)) {
+    const subKeys = new Set<string>()
+    keys.forEach((k) => {
+      const v = raw[k] as Record<string, any>
+      Object.keys(v || {}).forEach((sk) => subKeys.add(sk))
+    })
+    const subKeyList = Array.from(subKeys)
+
+    const series = subKeyList.map((sk) => ({
+      name: sk,
+      type: 'bar' as const,
+      // 对数轴下 0 值需替换为 1，否则不会渲染
+      data: keys.map((k) => {
+        const v = Number((raw[k] && raw[k][sk]) ?? 0)
+        return v > 0 ? v : 1
+      }),
+      barGap: 0,
+      label: { show: true, position: 'top' as const, fontSize: 10, formatter: '{c}' },
+    }))
+
+    return {
+      tooltip: {
+        trigger: 'axis' as const,
+        formatter: (params: any) => {
+          const axisTitle = params[0].axisValue
+          const lines = params.map((p: any) => {
+            const displayVal = p.value === 1 && p.data[1] === 0
+              ? 0
+              : p.value
+            return `${p.marker} ${p.seriesName}: ${displayVal.toLocaleString()}`
+          })
+          return `<div style="font-weight:600;margin-bottom:4px">${axisTitle}</div>${lines.join('<br/>')}`
+        },
+      },
+      legend: { data: subKeyList },
+      toolbox: { feature: { saveAsImage: {} } },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'category' as const, data: keys, axisLabel: { rotate: 30 } },
+      yAxis: logYAxis,
+      series,
+    }
+  }
+
+  // 单系列柱状图
+  const dataValues = keys.map((k) => {
+    const v = Number(raw[k] ?? 0)
+    return v > 0 ? v : 1
+  })
+  return {
+    tooltip: {
+      trigger: 'axis' as const,
+      axisPointer: { type: 'shadow' as const },
+      formatter: (params: any) => {
+        const p = params[0]
+        const displayVal = p.value === 1 ? 0 : p.value
+        return `${p.axisValue}<br/>${p.marker} 数量: ${displayVal.toLocaleString()}`
+      },
+    },
+    xAxis: { type: 'category' as const, data: keys, axisLabel: { rotate: 30 } },
+    yAxis: logYAxis,
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    series: [
+      {
+        name: '数量',
+        type: 'bar' as const,
+        data: dataValues,
+        itemStyle: { borderRadius: [4, 4, 0, 0] },
+        label: { show: true, position: 'top' as const, fontSize: 10, formatter: '{c}' },
+      },
+    ],
+  }
 })
 
 // ---------------------------------------------------------------------------
@@ -503,6 +676,7 @@ onMounted(() => {
   fetchDistribution()
   fetchRuntimeQuality()
   fetchAgentType()
+  fetchRegisterProcessing()
   window.addEventListener('resize', handleResize)
 })
 
@@ -518,7 +692,8 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto; /* 启用竖向滚动条 */
+  overflow-x: hidden;
 }
 
 /* ---------------------------------------------------------------------------
