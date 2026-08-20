@@ -17,6 +17,8 @@ const API = {
     deviceInstanceQuality: '/oneths/register/api/connectors/device-instance-quality',  // 设备运行质量
     operationsActions: '/oneths/register/api/operations/actions',  // 运维操作方向列表
     operationsTasks: '/oneths/register/api/operations/tasks',  // 运维任务列表
+    qpsTrend: '/oneths/register/api/connectors/qps-trend',  // 查询 connector 实例今日小时 QPS 趋势
+    messageCountTrend: '/oneths/register/api/connectors/message-count-trend',  // 查询 connector 实例今日小时处理消息数趋势
 }
 
 export const regDevicesList = (params: any) => {
@@ -79,6 +81,22 @@ export const loads = () => {
 export const brokersList = (params: { page: number; pageSize: number }) => {
     return request({
         url: API.brokersList,
+        method: 'get',
+        params,
+    })
+}
+
+export const qpsTrend = (params: any) => {
+    return request({
+        url: API.qpsTrend,
+        method: 'get',
+        params,
+    })
+}
+
+export const messageCountTrend = (params: any) => {
+    return request({
+        url: API.messageCountTrend,
         method: 'get',
         params,
     })

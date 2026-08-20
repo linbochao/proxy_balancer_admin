@@ -7,7 +7,8 @@
     TooltipComponent,
     LegendComponent,
     DataZoomComponent,
-    GraphicComponent
+    GraphicComponent,
+    TitleComponent
   } from 'echarts/components'
   import { CanvasRenderer } from 'echarts/renderers'
 
@@ -21,7 +22,8 @@
     LegendComponent,
     DataZoomComponent,
     GraphicComponent,
-    CanvasRenderer
+    CanvasRenderer,
+    TitleComponent
   ])
 
   const props = withDefaults(

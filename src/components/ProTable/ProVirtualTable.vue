@@ -19,6 +19,7 @@
         <template #default="{ height, width }">
           <el-table-v2 ref="tableRef" :columns="getComputedColumns(width)" :data="data"
             :width="width || totalMinWidth" :height="tableHeight(height)" v-loading="loading"
+            :row-key="props.rowKey" :highlight-current-row="props.highlightCurrentRow"
             :scrollbar-always-on="true" @cell-click="onCellClick" @row-click="onRowClick" />
         </template>
       </el-auto-resizer>
@@ -41,10 +42,13 @@ const props = withDefaults(
     loading?: boolean
     maxHeight?: string | number
     fit?: boolean
+    rowKey?: string
+    highlightCurrentRow?: boolean
   }>(),
   {
     maxHeight: 0,
     fit: true,
+    highlightCurrentRow: false,
   }
 )
 

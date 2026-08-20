@@ -1,60 +1,191 @@
 <template>
   <div class="home-view">
     <!-- 顶部概览卡片 -->
-    <div class="stats-grid">
-      <el-card class="stat-card" v-for="card in overviewCards" :key="card.key">
-        <div v-if="card.key === 'refresh'" class="stat-info">
-          <div>
-            <el-tooltip :content="card.tooltip" placement="top" effect="dark">
-              <div class="stat-label">{{ card.label }}</div>
-            </el-tooltip>
-            <div class="refresh-controls">
-              <el-select v-model="state.refreshInterval" placeholder="刷新频率" size="small" style="width: 100px"
-                @change="onRefreshIntervalChange">
-                <el-option label="手动" :value="0" />
-                <el-option label="10s" :value="10" />
-                <el-option label="30s" :value="30" />
-                <el-option label="60s" :value="60" />
-              </el-select>
-            </div>
-          </div>
-          <div class="stat-icon" :style="{ backgroundColor: card.bgColor, color: card.color }" style="cursor: pointer" @click="refreshAll">
-            <el-icon :size="28">
-              <component :is="card.icon" />
-            </el-icon>
-          </div>
-        </div>
-        <template v-else>
+    <el-row :gutter="20" class="stats-grid">
+      <!-- 1. 集群健康度 -->
+      <el-col :span="6">
+        <el-card class="stat-card">
           <div class="stat-info">
-            <template style="display: flex;flex-direction: column;align-items: center;justify-content: center;gap: 10px;">
-              <el-tooltip :content="card.tooltip" placement="top" effect="dark">
-                <div class="stat-label">{{ card.label }}</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+              <el-tooltip content="当前集群中处于健康状态的Broker占比，反映集群整体运行状况" placement="top" effect="dark">
+                <div class="stat-label">集群健康度</div>
               </el-tooltip>
               <div class="stat-value">
-                <template v-if="card.key === 'registerProcessing'">
-                  <div v-if="registerLoading">加载中...</div>
-                  <div v-else-if="registerError">错误: {{ registerError }}</div>
-                  <div v-else>
-                    <div style="font-size:20px;font-weight:700">{{ state.registerData.todayMessageCount ?? 0 }}</div>
-                    <div style="font-size:12px;color:#909399">今日处理消息数</div>
-                    <div style="height:6px"></div>
-                    <div style="font-size:16px">累计: {{ state.registerData.totalMessageCount ?? 0 }}</div>
-                  </div>
-                </template>
-                <template v-else>
-                  {{ card.value }}
-                </template>
+                {{ state.overviewData.clusterHealth != null ? state.overviewData.clusterHealth + '%' : '--' }}
               </div>
-            </template>
-            <div class="stat-icon" :style="{ backgroundColor: card.bgColor, color: card.color }">
+            </div>
+            <div class="stat-icon" :style="{ backgroundColor: 'rgba(64, 158, 255, 0.1)', color: '#409eff' }">
               <el-icon :size="28">
-                <component :is="card.icon" />
+                <DataAnalysis />
               </el-icon>
             </div>
           </div>
-        </template>
-      </el-card>
-    </div>
+        </el-card>
+      </el-col>
+
+      <!-- 2. 平均负载 -->
+      <el-col :span="6">
+        <el-card class="stat-card">
+          <div class="stat-info">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+              <el-tooltip content="所有Broker节点的平均负载率，数值越高表示负载越重" placement="top" effect="dark">
+                <div class="stat-label">平均负载</div>
+              </el-tooltip>
+              <div class="stat-value">
+                {{ state.overviewData.averageLoad != null ? state.overviewData.averageLoad + '%' : '--' }}
+              </div>
+            </div>
+            <div class="stat-icon" :style="{ backgroundColor: 'rgba(103, 194, 58, 0.1)', color: '#67c23a' }">
+              <el-icon :size="28">
+                <Connection />
+              </el-icon>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 3. 注册设备数 -->
+      <el-col :span="6">
+        <el-card class="stat-card">
+          <div class="stat-info">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+              <el-tooltip content="系统中已注册的设备总数" placement="top" effect="dark">
+                <div class="stat-label">注册设备数</div>
+              </el-tooltip>
+              <div class="stat-value">
+                {{ state.overviewData.registeredDeviceCount ?? '--' }}
+              </div>
+            </div>
+            <div class="stat-icon" :style="{ backgroundColor: 'rgba(64, 158, 255, 0.1)', color: '#409eff' }">
+              <el-icon :size="28">
+                <DataBoard />
+              </el-icon>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 5. 刷新（特殊布局：下拉选择 + 刷新按钮） -->
+      <el-col :span="6">
+        <el-card class="stat-card">
+          <div class="stat-info">
+            <div>
+              <el-tooltip content="每隔多少秒刷新一次首页数据" placement="top" effect="dark">
+                <div class="stat-label">数据刷新</div>
+              </el-tooltip>
+              <div class="refresh-controls">
+                <el-select v-model="state.refreshInterval" placeholder="刷新频率" size="small" style="width: 100px"
+                  @change="onRefreshIntervalChange">
+                  <el-option label="手动" :value="0" />
+                  <el-option label="10s" :value="10" />
+                  <el-option label="30s" :value="30" />
+                  <el-option label="60s" :value="60" />
+                </el-select>
+              </div>
+            </div>
+            <div class="stat-icon" :style="{ backgroundColor: 'rgba(103, 194, 58, 0.1)', color: '#67c23a' }"
+              style="cursor: pointer" @click="refreshAll">
+              <el-icon :size="28">
+                <Refresh />
+              </el-icon>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 下方五个概览卡片：启动快照、Connector 事件、Connector 指标、批量设备路由、Register 处理 -->
+    <el-row :gutter="20" class="stats-grid" type="flex">
+      <el-col style="flex: 0 0 20%; max-width: 20%;">
+        <el-card class="stat-cards" v-loading="state.registerLoading">
+          <div>
+              <div class="stat-label">启动快照</div>
+              <div class="stat-value small">
+                <div class="stat-Count">
+                  <span>今日</span>
+                  <span>{{ state.registerData.todayStartupSnapshotCount ?? state.registerData.todayMessageCount ?? 0 }}</span>
+                </div>
+                <div class="stat-Count">
+                  <span>累计</span>
+                  <span>{{ state.registerData.totalStartupSnapshotCount ?? state.registerData.totalMessageCount ?? 0 }}</span>
+                </div>
+              </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col style="flex: 0 0 20%; max-width: 20%;">
+        <el-card class="stat-cards" v-loading="state.registerLoading">
+          <div>
+              <div class="stat-label">Connector 事件</div>
+              <div class="stat-value small">
+                <div class="stat-Count">
+                  <span>今日</span>
+                  <span>{{ state.registerData.todayConnectorEventCount ?? 0 }}</span>
+                </div>
+                <div class="stat-Count">
+                  <span>累计</span>
+                  <span>{{ state.registerData.totalConnectorEventCount ?? 0 }}</span>
+                </div>
+              </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col style="flex: 0 0 20%; max-width: 20%;">
+        <el-card class="stat-cards" v-loading="state.registerLoading">
+          <div>
+              <div class="stat-label">Connector 指标</div>
+              <div class="stat-value small">
+                <div class="stat-Count">
+                  <span>今日</span>
+                  <span>{{ state.registerData.todayConnectorMetricCount ?? 0 }}</span>
+                </div>
+                <div class="stat-Count">
+                  <span>累计</span>
+                  <span>{{ state.registerData.totalConnectorMetricCount ?? 0 }}</span>
+                </div>
+              </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col style="flex: 0 0 20%; max-width: 20%;">
+        <el-card class="stat-cards" v-loading="state.registerLoading">
+          <div>
+              <div class="stat-label">批量设备路由</div>
+              <div class="stat-value small">
+                <div class="stat-Count">
+                  <span>今日</span>
+                  <span>{{ state.registerData.todayBatchDeviceRouteCount ?? 0 }}</span>
+                </div>
+                <div class="stat-Count">
+                  <span>累计</span>
+                  <span>{{ state.registerData.totalBatchDeviceRouteCount ?? 0 }}</span>
+                </div>
+              </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col style="flex: 0 0 20%; max-width: 20%;">
+        <el-card class="stat-cards" v-loading="state.registerLoading">
+          <div>
+              <div class="stat-label">Register 处理</div>
+              <div class="stat-value">
+                <div class="stat-Count">
+                  <span>今日</span>
+                  <span>{{ state.registerData.todayMessageCount ?? 0 }}</span>
+                </div>
+                <div class="stat-Count">
+                  <span>累计</span>
+                  <span>{{ state.registerData.totalMessageCount ?? 0 }}</span>
+                </div>
+              </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <!-- Broker负载 & 设备分布倾斜率 -->
     <div class="middle-row" :style="{ height: rowHeight + 'px' }">
@@ -64,7 +195,6 @@
             <span>Broker 负载</span>
           </div>
         </template>
-        <!-- ✅ 改造：使用 Chart.vue 组件替代手动 ECharts 实例 -->
         <div class="chart-container" v-loading="state.brokerLoading">
           <Chart :option="brokerLoadOption" height="100%" @chart-click="handleBrokerClick" />
         </div>
@@ -119,14 +249,8 @@
             <span>连接运行质量</span>
           </div>
         </template>
-        <PieChart
-          :data="qualityChartData"
-          :centerText="qualityCenterText"
-          :showLabel="true"
-          labelFormatter="{b}{d}%"
-          :tooltipFormatter="qualityTooltipFormatter"
-          :loading="state.qualityLoading"
-        />
+        <PieChart :data="qualityChartData" :centerText="qualityCenterText" :showLabel="true" labelFormatter="{b}{d}%"
+          :tooltipFormatter="qualityTooltipFormatter" :loading="state.qualityLoading" />
       </el-card>
 
       <el-card class="half-card">
@@ -135,14 +259,9 @@
             <span>连接分类</span>
           </div>
         </template>
-        <PieChart
-          :data="agentTypeChartData"
-          :centerText="agentTypeCenterText"
-          :tooltipFormatter="agentTypeTooltipFormatter"
-          :legendFormatter="agentTypeLegendFormatter"
-          :emphasisLabelFormatter="agentTypeEmphasisFormatter"
-          :loading="state.agentTypeLoading"
-        />
+        <PieChart :data="agentTypeChartData" :centerText="agentTypeCenterText"
+          :tooltipFormatter="agentTypeTooltipFormatter" :legendFormatter="agentTypeLegendFormatter"
+          :emphasisLabelFormatter="agentTypeEmphasisFormatter" :loading="state.agentTypeLoading" />
       </el-card>
     </div>
   </div>
@@ -239,57 +358,6 @@ const stopRefreshTimer = () => {
 const onRefreshIntervalChange = () => {
   startRefreshTimer()
 }
-
-const overviewCards = computed<OverviewCard[]>(() => {
-  const d = state.overviewData
-  return [
-    {
-      key: 'clusterHealth',
-      label: '集群健康度',
-      value: d.clusterHealth != null ? d.clusterHealth + '%' : '--',
-      tooltip: '当前集群中处于健康状态的Broker占比，反映集群整体运行状况',
-      icon: DataAnalysis,
-      bgColor: 'rgba(64, 158, 255, 0.1)',
-      color: '#409eff',
-    },
-    {
-      key: 'averageLoad',
-      label: '平均负载',
-      value: d.averageLoad != null ? d.averageLoad + '%' : '--',
-      tooltip: '所有Broker节点的平均负载率，数值越高表示负载越重',
-      icon: Connection,
-      bgColor: 'rgba(103, 194, 58, 0.1)',
-      color: '#67c23a',
-    },
-    {
-      key: 'registeredDeviceCount',
-      label: '注册设备数',
-      value: d.registeredDeviceCount ?? '--',
-      tooltip: '系统中已注册的设备总数',
-      icon: DataBoard,
-      bgColor: 'rgba(64, 158, 255, 0.1)',
-      color: '#409eff',
-    },
-    {
-      key: 'registerProcessing',
-      label: 'Register 处理概览',
-      value: '',
-      tooltip: '今日与累计处理消息数',
-      icon: DataBoard,
-      bgColor: 'rgba(64, 158, 255, 0.06)',
-      color: '#409eff',
-    },
-    {
-      key: 'refresh',
-      label: '数据刷新',
-      value: '',
-      tooltip: '每隔多少秒刷新一次首页数据',
-      icon: Refresh,
-      bgColor: 'rgba(103, 194, 58, 0.1)',
-      color: '#67c23a',
-    },
-  ]
-})
 
 // ---------------------------------------------------------------------------
 // Register 处理概览 - 接口调用
@@ -511,8 +579,8 @@ const FIXED_OFFSETS = [60, 40, 136, 20]
 
 const { containerHeight: totalAvailable } = useDynamicHeight(undefined, {
   offsets: FIXED_OFFSETS,
-  minHeight: 560,
-  maxHeight: 1000,
+  minHeight: 500,
+  maxHeight: 820,
 })
 
 const rowHeight = computed(() => Math.round(totalAvailable.value / 2))
@@ -557,11 +625,7 @@ onBeforeUnmount(() => {
 }
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
   margin-bottom: 20px;
-  flex-shrink: 0;
 }
 
 .stat-card {
@@ -574,6 +638,13 @@ onBeforeUnmount(() => {
 
 .stat-card:hover {
   transform: translateY(-4px);
+}
+
+.stat-cards {
+  width: 100%;
+  display: flex;
+  padding: 10px;
+  transition: transform 0.2s ease;
 }
 
 .stat-icon {
@@ -599,9 +670,31 @@ onBeforeUnmount(() => {
 }
 
 .stat-value {
+  display: flex;
+  flex-direction: column;
   font-size: 26px;
   font-weight: 600;
   color: #303133;
+}
+
+.stat-value.small {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.stat-Count {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 13px;
+  color: #909399;
+  padding-top: 4px;
 }
 
 .stat-label {
@@ -757,21 +850,5 @@ onBeforeUnmount(() => {
 .chart-container :deep(.chart) {
   flex: 1;
   min-height: 0;
-}
-
-@media screen and (max-width: 1200px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .middle-row,
-  .bottom-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 </style>
