@@ -145,7 +145,6 @@ import { createStatusFormatter, createTimeFormatter } from '@/utils/formatters'
 
 const router = useRouter()
 
-// ==================== 状态 ====================
 const {
   connectorList,
   connectionLoading,
@@ -167,7 +166,6 @@ const msgError = ref('')
 const qpsRaw = ref<any[]>([])
 const msgRaw = ref<any[]>([])
 
-// ==================== 表格列定义 ====================
 const statusFormatter = createStatusFormatter('status')
 const timeFormatter = createTimeFormatter()
 
@@ -188,7 +186,6 @@ const brokerColumns = computed<Column[]>(() => [
   },
 ])
 
-// ==================== 趋势图工具函数 ====================
 function createLineOption(
   rawData: any[],
   title: string,
@@ -270,7 +267,6 @@ function createLineOption(
 const qpsOption = computed(() => createLineOption(qpsRaw.value, 'QPS', 'hour', 'requestQps', '次/秒', '#409eff'))
 const msgOption = computed(() => createLineOption(msgRaw.value, '消息数', 'hour', 'messageCount', '条', '#67C23A'))
 
-// ==================== 趋势数据加载 ====================
 async function loadTrend(
   apiFn: (params: any) => Promise<any>,
   connectorId: string,
@@ -296,7 +292,6 @@ async function loadTrend(
   }
 }
 
-// ==================== 选中 Broker ====================
 function selectBroker(broker: Broker) {
   if (!broker) return
   selectedBroker.value = broker
@@ -307,7 +302,6 @@ function selectBroker(broker: Broker) {
   loadTrend(messageCountTrend, connectorId, broker.brokerInstanceId, msgLoading, msgError, msgRaw, '消息数趋势数据加载失败')
 }
 
-// ==================== 业务逻辑 ====================
 function onConnectorClick(connector: ConnectorItem) {
   // 切换连接时清空旧数据，但自动选择标志不变（避免再次自动选）
   selectedBroker.value = null
@@ -336,7 +330,6 @@ function onRefreshClick() {
   // 刷新后不清空 selectedBroker，让用户手动点选
 }
 
-// ==================== 自动选择（首次加载） ====================
 watch(
   connectorList,
   (newList) => {
@@ -359,7 +352,6 @@ watch(
   { immediate: true }
 )
 
-// ==================== 生命周期 ====================
 onMounted(() => {
   fetchList()
 })

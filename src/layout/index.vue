@@ -5,7 +5,7 @@
       
       <el-container class="main-container" direction="vertical">
         <Header @toggle-sidebar="toggleSidebar" />
-        
+        <PageTabs />
         <MainContent />
       </el-container>
     </el-container>
@@ -15,6 +15,7 @@
 <script setup lang="ts">
 import Sidebar from './components/Sidebar.vue'
 import Header from './components/Header.vue'
+import PageTabs from './components/PageTabs/index.vue'
 import MainContent from './components/MainContent.vue'
 
 const isSidebarCollapsed = ref(false)

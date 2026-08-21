@@ -2,12 +2,14 @@
   <el-main class="main-content">
     <div class="content-wrapper">
       <router-view v-slot="{ Component }">
-        <transition name="el-zoom-in-left" mode="out-in">
-          <component
-            :is="Component"
-            :key="$route.path"
-            class="route-component"
-          />
+        <transition name="fade" mode="out-in">
+          <keep-alive :include="cachedNames">
+            <component
+              :is="Component"
+              :key="$route.path"
+              class="route-component"
+            />
+          </keep-alive>
         </transition>
       </router-view>
     </div>
@@ -15,18 +17,12 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { usePageTabsStore } from '@/stores/pageTabs'
 
-const route = useRoute()
-const isLoaded = ref(true)
+const tabsStore = usePageTabsStore()
 
-// 路由切换时展示加载状态（与 transition 配合）
-watch(() => route.path, () => {
-  isLoaded.value = false
-  setTimeout(() => {
-    isLoaded.value = true
-  }, 100)
-})
+/** 需要缓存的组件名称列表 */
+const cachedNames = computed(() => tabsStore.cachedNames)
 </script>
 
 <style scoped>
