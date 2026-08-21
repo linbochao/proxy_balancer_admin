@@ -103,11 +103,11 @@
               <div class="stat-value small">
                 <div class="stat-Count">
                   <span>今日</span>
-                  <span>{{ state.registerData.todayStartupSnapshotCount ?? state.registerData.todayMessageCount ?? 0 }}</span>
+                  <span>{{ state.registerData['STARTUP_SNAPSHOT']?.todayMessageCount ?? 0 }}</span>
                 </div>
                 <div class="stat-Count">
                   <span>累计</span>
-                  <span>{{ state.registerData.totalStartupSnapshotCount ?? state.registerData.totalMessageCount ?? 0 }}</span>
+                  <span>{{ state.registerData['STARTUP_SNAPSHOT']?.totalMessageCount ?? 0 }}</span>
                 </div>
               </div>
           </div>
@@ -121,11 +121,11 @@
               <div class="stat-value small">
                 <div class="stat-Count">
                   <span>今日</span>
-                  <span>{{ state.registerData.todayConnectorEventCount ?? 0 }}</span>
+                  <span>{{ state.registerData['CONNECTOR_EVENT']?.todayMessageCount ?? 0 }}</span>
                 </div>
                 <div class="stat-Count">
                   <span>累计</span>
-                  <span>{{ state.registerData.totalConnectorEventCount ?? 0 }}</span>
+                  <span>{{ state.registerData['CONNECTOR_EVENT']?.totalMessageCount ?? 0 }}</span>
                 </div>
               </div>
           </div>
@@ -139,11 +139,11 @@
               <div class="stat-value small">
                 <div class="stat-Count">
                   <span>今日</span>
-                  <span>{{ state.registerData.todayConnectorMetricCount ?? 0 }}</span>
+                  <span>{{ state.registerData['CONNECTOR_METRICS']?.todayMessageCount ?? 0 }}</span>
                 </div>
                 <div class="stat-Count">
                   <span>累计</span>
-                  <span>{{ state.registerData.totalConnectorMetricCount ?? 0 }}</span>
+                  <span>{{ state.registerData['CONNECTOR_METRICS']?.totalMessageCount ?? 0 }}</span>
                 </div>
               </div>
           </div>
@@ -157,11 +157,11 @@
               <div class="stat-value small">
                 <div class="stat-Count">
                   <span>今日</span>
-                  <span>{{ state.registerData.todayBatchDeviceRouteCount ?? 0 }}</span>
+                  <span>{{ state.registerData['DEVICE_ROUTE_BATCH']?.todayMessageCount + "批" + " / " + state.registerData['DEVICE_ROUTE_BATCH']?.todayRouteCount + "条" }}</span>
                 </div>
                 <div class="stat-Count">
                   <span>累计</span>
-                  <span>{{ state.registerData.totalBatchDeviceRouteCount ?? 0 }}</span>
+                  <span>{{ state.registerData['DEVICE_ROUTE_BATCH']?.totalMessageCount + "批" + " / " + state.registerData['DEVICE_ROUTE_BATCH']?.totalRouteCount + "条" }}</span>
                 </div>
               </div>
           </div>
@@ -175,11 +175,11 @@
               <div class="stat-value">
                 <div class="stat-Count">
                   <span>今日</span>
-                  <span>{{ state.registerData.todayMessageCount ?? 0 }}</span>
+                  <span>{{ registerTotalToday }}</span>
                 </div>
                 <div class="stat-Count">
                   <span>累计</span>
-                  <span>{{ state.registerData.totalMessageCount ?? 0 }}</span>
+                  <span>{{ registerTotalAll }}</span>
                 </div>
               </div>
           </div>
@@ -319,6 +319,18 @@ const state = reactive({
   conTypeTotal: 0,
 })
 
+/** Register 处理 = 所有类型今日/累计消息数总和 */
+const registerTotalToday = computed(() => {
+  return Object.values(state.registerData).reduce(
+    (sum: number, item: any) => sum + Number(item?.todayMessageCount ?? 0), 0,
+  )
+})
+const registerTotalAll = computed(() => {
+  return Object.values(state.registerData).reduce(
+    (sum: number, item: any) => sum + Number(item?.totalMessageCount ?? 0), 0,
+  )
+})
+
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const refreshAll = () => {
@@ -370,7 +382,14 @@ const fetchRegisterProcessing = () => {
     .then((res: any) => {
       const data = res.data ?? res
       const payload = data.registerMetrics ?? data
-      state.registerData = payload ?? {}
+      // API 返回数组 [{type, todayMessageCount, totalMessageCount, ...}]，转为按 type 索引的对象
+      const map: Record<string, any> = {}
+      if (Array.isArray(payload)) {
+        for (const item of payload) {
+          if (item?.type) map[item.type] = item
+        }
+      }
+      state.registerData = map
     })
     .catch((err: any) => {
       state.registerError = err?.message || '获取数据失败'

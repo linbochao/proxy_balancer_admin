@@ -89,6 +89,9 @@ const router = useRouter()
 const route = useRoute()
 const tabsStore = usePageTabsStore()
 
+/** 在 watch immediate 之前恢复缓存，避免被覆盖 */
+tabsStore.restore()
+
 /** 当前激活的 tab 是否已固定 */
 const isActiveFixed = computed(() => {
   return tabsStore.activeTab?.fixed ?? false
@@ -247,7 +250,6 @@ function ctxToggleFix() {
 
 /** 点击其他区域关闭右键菜单 */
 onMounted(() => {
-  tabsStore.restore()
   document.addEventListener('click', closeContextMenu)
 })
 
@@ -327,9 +329,10 @@ onUnmounted(() => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #f56c6c;
+  background: #67c23a;
   margin-right: 5px;
   vertical-align: middle;
+  margin-bottom: 2px;
 }
 
 .page-tab--active.page-tab--fixed .page-tab-title::before {
@@ -349,24 +352,9 @@ onUnmounted(() => {
   justify-content: center;
   width: 16px;
   height: 16px;
-  border-radius: 50%;
   flex-shrink: 0;
   color: #c0c4cc;
   transition: all 0.15s ease;
-}
-
-.page-tab-close:hover {
-  background: rgba(0, 0, 0, 0.15);
-  color: #ffffff;
-}
-
-.page-tab--active .page-tab-close {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.page-tab--active .page-tab-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
 }
 
 /* ===== 右侧操作按钮 ===== */

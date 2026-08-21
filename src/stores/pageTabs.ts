@@ -19,6 +19,28 @@ const MAX_TABS = 15
 /** 不需要留存的路径 */
 const EXCLUDE_PATHS = ['/login', '/']
 
+/** 检测浏览器是否支持 localStorage */
+function storageAvailable(): boolean {
+  try {
+    const test = '__storage_test__'
+    localStorage.setItem(test, test)
+    localStorage.removeItem(test)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 校验恢复的数据格式是否合法 */
+function isValidData(data: any): data is { tabs: PageTab[]; activeTabPath: string } {
+  if (!data || typeof data !== 'object') return false
+  if (!Array.isArray(data.tabs)) return false
+  // 逐项校验
+  return data.tabs.every(
+    (t: any) => typeof t?.path === 'string' && typeof t?.fullPath === 'string',
+  )
+}
+
 export const usePageTabsStore = defineStore('pageTabs', {
   state: () => ({
     tabs: [] as PageTab[],
@@ -136,16 +158,21 @@ export const usePageTabsStore = defineStore('pageTabs', {
 
     /** 从 localStorage 恢复标签数据 */
     restore() {
+      if (!storageAvailable()) return
       try {
         const raw = localStorage.getItem(STORAGE_KEY)
-        if (raw) {
-          const saved = JSON.parse(raw)
-          if (saved?.tabs?.length) {
-            this.tabs = saved.tabs
-            this.activeTabPath = saved.activeTabPath || ''
-          }
+        if (!raw) return
+        const saved = JSON.parse(raw)
+        if (isValidData(saved)) {
+          this.tabs = saved.tabs
+          this.activeTabPath = saved.activeTabPath || ''
+        } else {
+          // 数据损坏，清除无效缓存
+          localStorage.removeItem(STORAGE_KEY)
         }
       } catch {
+        // JSON 解析失败，清除损坏数据
+        try { localStorage.removeItem(STORAGE_KEY) } catch {}
         this.tabs = []
         this.activeTabPath = ''
       }
@@ -153,6 +180,7 @@ export const usePageTabsStore = defineStore('pageTabs', {
 
     /** 持久化到 localStorage */
     saveToStorage() {
+      if (!storageAvailable()) return
       try {
         localStorage.setItem(
           STORAGE_KEY,
@@ -162,7 +190,7 @@ export const usePageTabsStore = defineStore('pageTabs', {
           }),
         )
       } catch {
-        // ignore
+        // 存储已满或不可用，静默失败
       }
     },
   },

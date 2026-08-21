@@ -233,9 +233,9 @@ onUnmounted(() => {
   justify-content: space-between;
   margin: 0 20px;
   background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   position: relative;
   z-index: 100;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .header-left {
