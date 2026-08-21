@@ -21,10 +21,7 @@
             >
               <div class="card-top">
                 <span class="card-name">{{ connector.connectorName }}</span>
-                <el-tag
-                  :type="connector.status === 'RUNNING' ? 'success' : 'info'"
-                  size="small"
-                >
+                <el-tag :type="connector.status === 'RUNNING' ? 'success' : 'info'" size="small">
                   {{ connector.status === 'RUNNING' ? '运行中' : '已停止' }}
                 </el-tag>
               </div>
@@ -61,15 +58,11 @@
             <div class="card-header">
               <span>
                 Broker 分布
-                <template v-if="selectedConnector">
-                  — {{ selectedConnector.connectorName }}
-                </template>
+                <template v-if="selectedConnector"> — {{ selectedConnector.connectorName }} </template>
               </span>
               <div v-if="selectedConnector">
                 <el-button link size="small" class="refresh-btn" @click.stop="onRefreshClick" title="刷新 Broker 列表">
-                  <el-icon :size="16">
-                    <Refresh />
-                  </el-icon>
+                  <el-icon :size="16"><Refresh /></el-icon>
                 </el-button>
                 <span class="connector-port">端口: {{ selectedConnector.port }}</span>
               </div>
@@ -95,22 +88,20 @@
           </div>
         </el-card>
 
-        <!-- 趋势图区域（与表格垂直排列） -->
+        <!-- 趋势图区域 -->
         <div class="trend-section">
           <el-card class="trend-card" v-loading="qpsLoading">
             <template #header>
               <div class="card-header">
                 <span>QPS 趋势图</span>
-                <span v-if="selectedBroker" class="header-tip">
-                  {{ selectedBroker.brokerInstanceId }}
-                </span>
+                <span v-if="selectedBroker" class="header-tip">{{ selectedBroker.brokerInstanceId }}</span>
               </div>
             </template>
             <div v-if="qpsError" class="trend-error">
               <el-alert :title="qpsError" type="error" :closable="false" show-icon />
             </div>
             <el-empty
-              v-else-if="!selectedBroker"
+              v-else-if="!selectedBroker || !qpsRaw.length"
               description="请选择上方表格中的 Broker 行查看趋势"
               :image-size="60"
             />
@@ -121,16 +112,14 @@
             <template #header>
               <div class="card-header">
                 <span>Connector 消息数趋势图</span>
-                <span v-if="selectedBroker" class="header-tip">
-                  {{ selectedBroker.brokerInstanceId }}
-                </span>
+                <span v-if="selectedBroker" class="header-tip">{{ selectedBroker.brokerInstanceId }}</span>
               </div>
             </template>
             <div v-if="msgError" class="trend-error">
               <el-alert :title="msgError" type="error" :closable="false" show-icon />
             </div>
             <el-empty
-              v-else-if="!selectedBroker"
+              v-else-if="!selectedBroker || !msgRaw.length"
               description="请选择上方表格中的 Broker 行查看趋势"
               :image-size="60"
             />
@@ -146,16 +135,17 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import ProTable from '@/components/Table/index.vue'
 import Chart from '@/components/Chart/index.vue'
 import type { Column, TableBtn } from '@/components/Table/index'
-import { useRouter } from 'vue-router'
 import { qpsTrend, messageCountTrend } from '@/api'
 import { useConnectorList, type ConnectorItem, type Broker } from '../common/useConnectorList'
 import { createStatusFormatter, createTimeFormatter } from '@/utils/formatters'
 
 const router = useRouter()
 
+// ==================== 状态 ====================
 const {
   connectorList,
   connectionLoading,
@@ -168,21 +158,16 @@ const {
 } = useConnectorList(1)
 
 const selectedBroker = ref<Broker | null>(null)
+const autoSelected = ref(false) // 是否已完成自动选择
 
-// QPS 趋势
 const qpsLoading = ref(false)
-const qpsError = ref('')
-const qpsRaw = ref<any[]>([])
-
-// 消息数趋势
 const msgLoading = ref(false)
+const qpsError = ref('')
 const msgError = ref('')
+const qpsRaw = ref<any[]>([])
 const msgRaw = ref<any[]>([])
 
-const operationBtns: TableBtn[] = [
-  { label: '注册设备', type: 'primary', link: true },
-]
-
+// ==================== 表格列定义 ====================
 const statusFormatter = createStatusFormatter('status')
 const timeFormatter = createTimeFormatter()
 
@@ -194,10 +179,16 @@ const brokerColumns = computed<Column[]>(() => [
   { prop: 'totalRequestCount', label: '总消息数', minWidth: 80 },
   { prop: 'startedAt', label: '启动时间', minWidth: 150, formatter: timeFormatter },
   { prop: 'lastMessageAt', label: '最近消息', minWidth: 150, formatter: timeFormatter },
-  { prop: 'operation', label: '操作', type: 'operation', tableBtns: operationBtns, minWidth: 100 }
+  {
+    prop: 'operation',
+    label: '操作',
+    type: 'operation',
+    tableBtns: [{ label: '注册设备', type: 'primary', link: true }],
+    minWidth: 100,
+  },
 ])
 
-// 生成折线图 option
+// ==================== 趋势图工具函数 ====================
 function createLineOption(
   rawData: any[],
   title: string,
@@ -206,16 +197,15 @@ function createLineOption(
   yLabel: string,
   lineColor: string,
 ) {
-  const sorted = [...rawData].sort((a, b) => (Number(a[xField]) - Number(b[xField])))
+  if (!rawData.length) {
+    return {}
+  }
+  const sorted = [...rawData].sort((a, b) => Number(a[xField]) - Number(b[xField]))
   const xData = sorted.map((d) => `${String(d[xField]).padStart(2, '0')}:00`)
   const yData = sorted.map((d) => Number(d[yField]) ?? 0)
 
   return {
-    title: {
-      text: '',
-      left: 'left',
-      textStyle: { fontSize: 14, fontWeight: 600, color: '#303133' },
-    },
+    title: { text: '', left: 'left', textStyle: { fontSize: 14, fontWeight: 600, color: '#303133' } },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'cross' },
@@ -243,8 +233,8 @@ function createLineOption(
         fontSize: 11,
         color: '#606266',
         formatter: (v: number) => {
-          if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M'
-          if (v >= 1000) return (v / 1000).toFixed(1) + 'K'
+          if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M'
+          if (v >= 1_000) return (v / 1_000).toFixed(1) + 'K'
           return String(v)
         },
       },
@@ -262,7 +252,10 @@ function createLineOption(
         areaStyle: {
           color: {
             type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
             colorStops: [
               { offset: 0, color: lineColor + '33' },
               { offset: 1, color: lineColor + '00' },
@@ -274,124 +267,106 @@ function createLineOption(
   }
 }
 
-const qpsOption = computed(() =>
-  createLineOption(qpsRaw.value, 'QPS', 'hour', 'requestQps', '次/秒', '#409eff'),
-)
+const qpsOption = computed(() => createLineOption(qpsRaw.value, 'QPS', 'hour', 'requestQps', '次/秒', '#409eff'))
+const msgOption = computed(() => createLineOption(msgRaw.value, '消息数', 'hour', 'messageCount', '条', '#67C23A'))
 
-const msgOption = computed(() =>
-  createLineOption(msgRaw.value, '消息数', 'hour', 'messageCount', '条', '#67C23A'),
-)
-
-// 加载 QPS 趋势
-async function loadQpsTrend(connectorId: string, brokerInstanceId: string) {
-  qpsLoading.value = true
-  qpsError.value = ''
+// ==================== 趋势数据加载 ====================
+async function loadTrend(
+  apiFn: (params: any) => Promise<any>,
+  connectorId: string,
+  brokerInstanceId: string,
+  loadingRef: { value: boolean },
+  errorRef: { value: string },
+  dataRef: { value: any[] },
+  errorMsg: string,
+) {
+  if (!connectorId || !brokerInstanceId) return
+  loadingRef.value = true
+  errorRef.value = ''
   try {
-    const res: any = await qpsTrend({ connectorId, brokerInstanceId })
+    const res: any = await apiFn({ connectorId, brokerInstanceId })
     const payload = res?.data?.data ?? res?.data ?? res ?? []
-    qpsRaw.value = Array.isArray(payload) ? payload : []
+    dataRef.value = Array.isArray(payload) ? payload : []
   } catch (err: any) {
-    qpsError.value = err?.message || 'QPS 趋势数据加载失败'
-    qpsRaw.value = []
-    ElMessage.error(qpsError.value)
+    errorRef.value = err?.message || errorMsg
+    dataRef.value = []
+    ElMessage.error(errorRef.value)
   } finally {
-    qpsLoading.value = false
+    loadingRef.value = false
   }
 }
 
-// 加载消息数趋势
-async function loadMsgTrend(connectorId: string, brokerInstanceId: string) {
-  msgLoading.value = true
-  msgError.value = ''
-  try {
-    const res: any = await messageCountTrend({ connectorId, brokerInstanceId })
-    const payload = res?.data?.data ?? res?.data ?? res ?? []
-    msgRaw.value = Array.isArray(payload) ? payload : []
-  } catch (err: any) {
-    msgError.value = err?.message || '消息数趋势数据加载失败'
-    msgRaw.value = []
-    ElMessage.error(msgError.value)
-  } finally {
-    msgLoading.value = false
-  }
+// ==================== 选中 Broker ====================
+function selectBroker(broker: Broker) {
+  if (!broker) return
+  selectedBroker.value = broker
+  const connectorId = selectedConnector.value?.connectorId || ''
+  if (!connectorId) return
+  // 同时加载两个趋势
+  loadTrend(qpsTrend, connectorId, broker.brokerInstanceId, qpsLoading, qpsError, qpsRaw, 'QPS 趋势数据加载失败')
+  loadTrend(messageCountTrend, connectorId, broker.brokerInstanceId, msgLoading, msgError, msgRaw, '消息数趋势数据加载失败')
 }
 
-function clearTrends() {
+// ==================== 业务逻辑 ====================
+function onConnectorClick(connector: ConnectorItem) {
+  // 切换连接时清空旧数据，但自动选择标志不变（避免再次自动选）
+  selectedBroker.value = null
   qpsRaw.value = []
   msgRaw.value = []
   qpsError.value = ''
   msgError.value = ''
+  selectConnector(connector)
 }
 
-// Broker 列表更新后：默认选中第一行并加载趋势
-watch(
-  () => brokerList.value,
-  (newList) => {
-    if (Array.isArray(newList) && newList.length > 0) {
-      const first = newList[0]
-      const same = selectedBroker.value?.brokerInstanceId === first.brokerInstanceId
-      if (!same) {
-        selectedBroker.value = first
-        loadTrendsFor(first)
-      }
-    } else {
-      selectedBroker.value = null
-      clearTrends()
-    }
-  },
-)
-
-// 切换 connector 时清空旧趋势
-watch(
-  () => selectedConnector.value?.connectorId,
-  () => {
-    selectedBroker.value = null
-    clearTrends()
-  },
-)
-
-// Broker 行点击（行选中）→ 直接加载趋势
 function onBrokerRowClick(row: Broker) {
-  if (!row) return
-  selectedBroker.value = row
-  loadTrendsFor(row)
+  selectBroker(row) // 复用
 }
 
-function loadTrendsFor(broker: Broker) {
+function onOperationClick(btn?: TableBtn, row?: Broker) {
+  if (btn?.label === '注册设备' && row) {
+    const connectorId = selectedConnector.value?.connectorId
+    const brokerInstanceId = row.brokerInstanceId
+    router.push({ path: '/metrics/serviceType/detail', query: { connectorId, brokerInstanceId } })
+  }
+}
+
+function onRefreshClick() {
   const connectorId = selectedConnector.value?.connectorId
-  const brokerInstanceId = broker?.brokerInstanceId
-  if (!connectorId || !brokerInstanceId) return
-  loadQpsTrend(connectorId, brokerInstanceId)
-  loadMsgTrend(connectorId, brokerInstanceId)
+  if (connectorId) fetchBrokerList(connectorId)
+  // 刷新后不清空 selectedBroker，让用户手动点选
 }
 
-const onConnectorClick = (row: ConnectorItem) => {
-  selectConnector(row)
-}
-
-const onOperationClick = (btn?: TableBtn, row?: Broker) => {
-  if (btn && row) {
-    if (btn.label === '注册设备') {
-      const connectorId = selectedConnector.value?.connectorId
-      const brokerInstanceId = row.brokerInstanceId
-      router.push({ path: '/metrics/serviceType/detail', query: { connectorId, brokerInstanceId } })
+// ==================== 自动选择（首次加载） ====================
+watch(
+  connectorList,
+  (newList) => {
+    if (!autoSelected.value && newList.length > 0 && !selectedConnector.value) {
+      selectConnector(newList[0]) // 选中第一个连接
     }
-  }
-}
+  },
+  { immediate: true }
+)
 
-const onRefreshClick = () => {
-  const connectorId = selectedConnector.value?.connectorId
-  if (connectorId) {
-    fetchBrokerList(connectorId)
-  }
-}
+watch(
+  brokerList,
+  (newList) => {
+    if (!autoSelected.value && newList.length > 0 && !selectedBroker.value) {
+      const first = newList[0]
+      selectBroker(first)      // 选中第一个 Broker 并加载趋势
+      autoSelected.value = true // 标记已完成
+    }
+  },
+  { immediate: true }
+)
 
+// ==================== 生命周期 ====================
 onMounted(() => {
   fetchList()
 })
 </script>
 
 <style scoped>
+/* 样式保持不变，完全复用 */
 .service-type-view {
   height: 100%;
   padding: 0;
@@ -406,14 +381,12 @@ onMounted(() => {
   min-height: 0;
 }
 
-/* ===== 左侧面板 ===== */
 .left-panel {
   flex: 0 0 420px;
   display: flex;
   flex-direction: column;
 }
 
-/* ===== 右侧整体列（Broker 表格 + 趋势图） ===== */
 .right-col {
   flex: 1;
   min-width: 0;
@@ -457,7 +430,6 @@ onMounted(() => {
   overflow-x: hidden;
 }
 
-/* ===== 趋势图区域（垂直堆叠，单列） ===== */
 .trend-section {
   display: flex;
   flex-direction: column;
@@ -483,7 +455,6 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-/* ===== 连接卡片 ===== */
 .connector-card {
   padding: 14px 16px;
   border: 1px solid #e4e7ed;
